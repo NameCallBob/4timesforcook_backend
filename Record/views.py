@@ -1,0 +1,127 @@
+from django.shortcuts import render
+from Record.models import Record_Output,Record_Search,Record_DataChange
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+import answer
+
+class record_:
+
+    def create_record(ip,search,res):
+        """記錄使用者輸入輸出內容"""
+        output_rId = "TEST{0:05d}".format(Record_Search.objects.all().count()+1)
+        try:
+
+            Record_Search(
+                recordId = output_rId ,
+                ip_address = ip,
+                searchText = search
+            ).save()
+            Record_Output(
+                recordId = output_rId ,
+                recipeId = res ,
+            ).save()
+            print("紀錄成功")
+            return 1
+
+        except Exception as e :
+            print(e)
+            return
+
+    def create_Member_record(ip,user_id,type):
+        """記錄會員資料修改紀錄"""
+        type_list = ["change","delete","disable","forgot"]
+        if type not in type_list:
+            print(f"type not found , your input is {type},you can use [change,delete,disable,forgot]")
+            return 0
+
+        descriptio_list = [
+            "修改資料",
+            "刪除帳號",
+            "停用帳號",
+            "密碼忘記,重新設置"
+        ]
+
+        for i in range(0,3):
+            if type_list[i] == type:
+                description = descriptio_list[i]
+                try:
+                    Record_DataChange(
+                        ip_address=ip,
+                        user_id=user_id,
+                        change_type=type,
+                        change_description=description,
+                    ).save()
+                    return 1
+
+                except Exception as e :
+                    print(f"Record儲存失敗！{e}")
+                    return 0
+        print("出現意外問題")
+        return 0
+    
+    def create_User_answer(data):
+        AnswerSerializer.create(data)
+
+
+from Record.models import Record_Answer,Question
+from Record.serializer import Question_output_Serializer,AnswerSerializer
+from threading import Thread
+class TestViewset(viewsets.ViewSet):
+    """測驗使用"""
+
+    @action(methods=['get'],detail=False)
+    def question(self,request):
+        """問題"""
+        try:
+            data = Question.objects.all()
+            data = Question_output_Serializer(data,many=True)
+            return Response(data=data,status=200)
+        except Exception as e :
+            return answer.backend_error.accident(e)
+
+
+
+    @action(methods=['post'],detail=False)
+    def check(self,request):
+        """確認正確"""
+        serializer = AnswerSerializer(request.data,many=True)
+        if serializer.is_valid():
+            # 
+            try:
+                score , wrong_qus = self.__caculate(serializer.data)
+                
+                t1 = Thread(target=record_.create_User_answer,args=(serializer.data)) 
+                t1.start()
+
+                return Response(status=200,data={"score":score,"wrong_question":wrong_qus})
+            except Exception as e:
+                return Response(status=500,data=answer.backend_error.accident(e))
+        else:
+            return answer.frontend_error.FormatError(serializer.errors)
+        
+
+    def __caculate(self,data:list) -> int:
+        """計算時間"""
+        score = 100; 
+        wrong = 100 / len(data)
+        answer = {"A":1,"B":2,"C":3,"D":4}
+        wrong_qus = []
+        for i in data:
+            ob = Question.objects.filter(qid = i['qid'])
+            if ob[0].right_answer == answer[i['answer']]:
+                continue
+            else:
+                score = score - wrong
+                wrong_qus.append(i['qid'])
+
+        return score,wrong_qus
+    
+    
+
+
+
+        
+            
+            
+        
