@@ -79,6 +79,8 @@ class Health(models.Model):
     excercise_time = models.IntegerField("運動時間",null=True,choices=EXCERCISE_TIME,default=1)
     allergen = models.TextField("過敏原",null=True)
     disease = models.TextField("慢性病",null=True)
+    
+    
 
 class Prefer(models.Model):
     """會員飲食偏好"""
@@ -88,3 +90,4 @@ class Prefer(models.Model):
     prefer = models.TextField("飲食偏好")
     Nut_need = models.TextField("營養需求")
     update_time = models.DateTimeField(auto_now=True)
+

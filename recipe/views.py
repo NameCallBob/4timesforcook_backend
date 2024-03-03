@@ -2,7 +2,6 @@ from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-# Create your views here.
 # model
 from Record.models import Record_Search , Record_Output
 from recipe.models import Recipe_Ob
@@ -27,10 +26,23 @@ class DefaultRunViewsets(viewsets.ModelViewSet):
             print(f"其問題如：{e}")
             return(Response(status=500,data=f"{e}"))
 
+
+
 class RecipeViewsets(viewsets.ModelViewSet):
     """食譜相關"""
     serializer_class = RecipeSerializer
     queryset = Recipe_Ob.objects.all()
+
+    @action(methods=['get'],detail=True)
+    def example(self,request):
+        """食譜 範例"""
+        ob = Recipe_Ob.objects.all()[0:3]
+        res = RecipeSerializer(ob , many=True)
+        return Response(status=200,data=res.data)
+
+
+
+
     @action(methods=['post'] , detail=False)
     def get(self,request):
         """給予前端食譜資料"""
@@ -43,8 +55,6 @@ class RecipeViewsets(viewsets.ModelViewSet):
         }
         }
 
-    
-        
         list_id = DB_search().run(test_data)
         if list_id != 0 and type(list_id) == list :
             """執行成功"""

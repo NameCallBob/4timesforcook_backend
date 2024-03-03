@@ -3,6 +3,6 @@ from Record.models import Record_Answer,Question,Category
 # Register your models here.
 
 
-admin.register(Category)
-admin.register(Question)
-admin.register(Record_Answer)
+admin.site.register(Category)
+admin.site.register(Question)
+admin.site.register(Record_Answer)

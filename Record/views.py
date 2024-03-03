@@ -60,8 +60,6 @@ class record_:
         print("出現意外問題")
         return 0
     
-    def create_User_answer(data):
-        AnswerSerializer.create(data)
 
 
 from Record.models import Record_Answer,Question
@@ -91,7 +89,7 @@ class TestViewset(viewsets.ViewSet):
             try:
                 score , wrong_qus = self.__caculate(serializer.data)
                 
-                t1 = Thread(target=record_.create_User_answer,args=(serializer.data)) 
+                t1 = Thread(target=serializer.create(request.data),args=(serializer.data)) 
                 t1.start()
 
                 return Response(status=200,data={"score":score,"wrong_question":wrong_qus})
@@ -104,7 +102,7 @@ class TestViewset(viewsets.ViewSet):
     def __caculate(self,data:list) -> int:
         """計算時間"""
         score = 100; 
-        wrong = 100 / len(data)
+        wrong = 100 // len(data)
         answer = {"A":1,"B":2,"C":3,"D":4}
         wrong_qus = []
         for i in data:

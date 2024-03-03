@@ -26,18 +26,26 @@ class Record_Output(models.Model):
 
 class Category(models.Model):
     name = models.TextField("問題類別名稱")
+    def __str__(self) -> str:
+        return self.name
 
 class Question(models.Model):
     """題目資訊"""
     ANSWER = {
         "A":1,"B":2,"C":3,"D":4
     }
+    DIFF = {
+        "easy":1,"normal":2,"hard":3
+    }
     qid = models.IntegerField("題目編號",primary_key=True)
     cate = models.ForeignKey(Category,on_delete=models.CASCADE)
     content = models.TextField("題目")
-    option = models.TextField("選項")
-    difficulty = models.IntegerField("難度")
-    right_answer = models.IntegerField("正確答案",choices=ANSWER)
+    option1 = models.TextField("選項1",null = True)
+    option2 = models.TextField("選項2",null = True)
+    option3 = models.TextField("選項3",null = True)
+    option4 = models.TextField("選項4",null = True)
+    difficulty = models.IntegerField("難度" , choices=DIFF)
+    right_answer = models.IntegerField("正確答案" , choices=ANSWER)
 
     def __str__(self):
         return self.content

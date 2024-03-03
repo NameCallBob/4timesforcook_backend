@@ -4,7 +4,6 @@ from rest_framework import viewsets, permissions
 from rest_framework.response import Response
 # check
 from django.contrib.auth import authenticate
-from rest_framework_jwt.utils import jwt_decode_handler
 from rest_framework_simplejwt.tokens import RefreshToken
 # inner
 from Record.views import record_
@@ -14,11 +13,6 @@ from Member.serializer import MemberPrivateSerializer, MemberSerializer, HealthS
 from django.db import transaction
 import answer
 
-def get_Account(request):
-    jwt_token = request.auth
-    decoded_token = jwt_decode_handler(jwt_token)
-    account = decoded_token['user_id']
-    return account
 
 
 class MemberViewset(viewsets.ModelViewSet):
