@@ -3,7 +3,7 @@ class frontend_error:
     """前端的問題"""
     def FormatError(error_log)-> Response:
         """輸出格式錯誤"""
-        return Response(data="傳送格式出錯或資料有誤，錯誤訊息:{0}，請依照錯誤訊息進行修正".format(Private_serializer.errors), status=400)
+        return Response(data="傳送格式出錯或資料有誤，錯誤訊息:{0}，請依照錯誤訊息進行修正".format(error_log), status=400)
 
     def KeyError() -> Response:
         """前端傳送的資料key找不到"""

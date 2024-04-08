@@ -1,5 +1,5 @@
 
-from rest_framework.decorators import action
+from rest_framework.decorators import action ,permission_classes ,authentication_classes
 from rest_framework import viewsets, permissions
 from rest_framework.response import Response
 # check
@@ -63,7 +63,7 @@ class Member_use_Viewset(viewsets.ViewSet):
     """會員登入註冊"""
     permission_classes = [permissions.AllowAny]
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['post'], detail=False ,authentication_classes=[])
     def login(self, request):
         """登入"""
         account = request.data.get('account')
@@ -75,7 +75,7 @@ class Member_use_Viewset(viewsets.ViewSet):
         else:
             return Response({'error': 'account or password Not Correctly'}, status=400)
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['post'], detail=False ,authentication_classes=[permissions.AllowAny])
     def register(self, request):
         """註冊"""
         try:
