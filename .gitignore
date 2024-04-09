@@ -8,10 +8,10 @@
 
 ## /* 不儲存資料庫更改的紀錄 */
 
-/HealthManage/migrations
-/Record/migrations
-/recipe/migrations
-/Member/migrations
+HealthManage/migrations/
+Record/migrations/
+recipe/migrations/
+Member/migrations/
 
 # 模型(檔案太大)
 /recipe/BertModel/model.pth
