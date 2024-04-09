@@ -79,11 +79,16 @@ class Health(models.Model):
     excercise_time = models.IntegerField("運動時間",null=True,choices=EXCERCISE_TIME,default=1)
     allergen = models.TextField("過敏原",null=True)
     disease = models.TextField("慢性病",null=True)
-    
-    
+
+
 
 class Prefer(models.Model):
     """會員飲食偏好"""
+    TARGET_OPTIONS = {
+        1:"lose weight",3:"build muscle",
+        2:"keep health",4:"control blood sugar",
+        5:"control cholesterol",
+    }
     uid = models.ForeignKey(MemberP,on_delete=models.CASCADE,unique=True)
     target = models.TextField("飲食目標",null=False)
     restrict = models.TextField("飲食限制")
@@ -91,3 +96,18 @@ class Prefer(models.Model):
     Nut_need = models.TextField("營養需求")
     update_time = models.DateTimeField(auto_now=True)
 
+
+class HealthTarget(models.Model):
+    """使用者飲食目標"""
+    uid = models.ForeignKey(Member, on_delete=models.CASCADE)
+    calories_intake = models.PositiveIntegerField(default=0)  # 卡路里攝取量
+    water_intake = models.PositiveIntegerField(default=0)     # 水分攝取量
+    exercise_duration = models.PositiveIntegerField(default=0) # 運動時長（分鐘）
+    start_time = models.DateField(auto_now_add=True)
+    end_time = models.DateField()
+
+    def __str__(self):
+        return f"{self.uid.name}'s Health Record end on {self.end_time}"
+
+    class Meta:
+        verbose_name_plural = "Health Records"

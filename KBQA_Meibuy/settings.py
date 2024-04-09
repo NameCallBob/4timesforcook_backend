@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'recipe.apps.RecipeConfig',
     'Member.apps.MemberConfig',
     'Record.apps.RecordConfig',
+    'HealthManage.apps.HealthmanageConfig',
 
 ]
 

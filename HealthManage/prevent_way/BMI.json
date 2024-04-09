@@ -1,0 +1,37 @@
+{
+    "BMI":{
+        "過輕":{
+            "base_calories":35,
+            "water":2500,
+            "exercise":600
+        },
+        "適中":{
+            "base_calories":30,
+            "water":3000,
+            "exercise":1200
+        },
+        "過胖":{
+            "base_calories":45,
+            "water":3200,
+            "exercise":1200
+        },
+        "輕度肥胖":{
+            "base_calories":40,
+            "water":3200,
+            "exercise":1200
+        },
+        "中度肥胖":{
+            "base_calories":35,
+            "water":3200,
+            "exercise":1200
+        },
+        "重度肥胖":{
+            "base_calories":35,
+            "water":3200,
+            "exercise":1200
+        }
+    },
+    "chronic":{
+        
+    }
+}
