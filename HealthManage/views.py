@@ -15,7 +15,7 @@ class DailyViewsets(ViewSet):
         from Member.models import Member
         uid = Member.objects.get(uid=request.user.uid)
         serializer = UserDailyInfoSerializer([uid,1])
-        res = self.__sum(uid,serializer.data)
+        res = self.__sumUserInputRecord(uid,serializer.data)
         return Response(data=res,status=200)
 
     @action(methods=['post'],permission_classes = [IsAuthenticated] , detail=False)
@@ -73,6 +73,9 @@ class DailyViewsets(ViewSet):
         for date in current_week_dates:
             week_date.append(date.strftime("%Y-%m-%d"))
 
+        from datetime import datetime , timedelta
+        start_date = week_date[0];end_date=week_date[6]
+
         return Response(data=week_date,status=200)
 
 
@@ -85,7 +88,7 @@ class DailyViewsets(ViewSet):
         else:
             return False
 
-    def __sum(self,uid,serializer_data):
+    def __sumUserInputRecord(self,uid,serializer_data):
         """加總目前使用者之填寫紀錄並與目標進行結合"""
         water = 0 ; calories = 0 ; exercise = 0
         print(serializer_data)
@@ -125,7 +128,7 @@ class DailyViewsets(ViewSet):
             }
             }
 
-    def __get_current_week_dates():
+    def __get_current_week_dates(self):
         """確認使用者的填寫紀錄"""
         from datetime import datetime,timedelta
         # 取得當天日期

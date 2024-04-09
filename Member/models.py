@@ -96,6 +96,7 @@ class Prefer(models.Model):
     Nut_need = models.TextField("營養需求")
     update_time = models.DateTimeField(auto_now=True)
 
+# 以下資料庫用於HealthManage進行使用
 
 class HealthTarget(models.Model):
     """使用者飲食目標"""
@@ -111,3 +112,12 @@ class HealthTarget(models.Model):
 
     class Meta:
         verbose_name_plural = "Health Records"
+
+class InputRecord(models.Model):
+    """使用者輸入後整合的紀錄"""
+    uid = models.ForeignKey(Member, on_delete=models.CASCADE)
+    date = models.DateField()
+    calories_sum = models.PositiveIntegerField(default=0)
+    water_sum = models.PositiveIntegerField(default=0)
+    exercise_sum = models.PositiveIntegerField(default=0)
+    status = models.IntegerField(default=0)
