@@ -33,7 +33,7 @@ class DailyViewsets(ViewSet):
                 return Response(status=400,data=serializers.errors)
         else:
             return Response(status=400,data=serializers.errors)
-            
+
     @action(methods=['post'],permission_classes = [IsAuthenticated] , detail=False)
     def input_calories(self,request):
         """使用者新增卡路里的紀錄"""
@@ -48,7 +48,7 @@ class DailyViewsets(ViewSet):
                 return Response(status=400,data=serializers.errors)
         else:
             return Response(status=400,data=serializers.errors)
-            
+
     @action(methods=['post'],permission_classes = [IsAuthenticated] , detail=False)
     def input_exercise(self,request):
         """使用者新增運動的紀錄"""
@@ -64,7 +64,7 @@ class DailyViewsets(ViewSet):
         else:
             return Response(status=400,data=serializers.errors)
 
-    @action(methods=['get'],permission_classes = [IsAuthenticated] , detail=False) 
+    @action(methods=['get'],permission_classes = [IsAuthenticated] , detail=False)
     def week_record(self,request):
         """使用者的計算輸入狀況"""
         # 使用函式取得一週的日期
@@ -72,21 +72,22 @@ class DailyViewsets(ViewSet):
         # 列印出一週的日期
         for date in current_week_dates:
             week_date.append(date.strftime("%Y-%m-%d"))
-        pass
+
+        return Response(data=week_date,status=200)
 
 
     def __check(self,request_data,needed_key):
         """檢查是否含有特定詞彙"""
-        required_fields = needed_key  
+        required_fields = needed_key
         missing_fields = [field for field in required_fields if field not in request_data]
         if len(missing_fields) == 0:
             return True
         else:
             return False
-        
+
     def __sum(self,uid,serializer_data):
         """加總目前使用者之填寫紀錄並與目標進行結合"""
-        water = 0 ; calories = 0 ; exercise = 0 
+        water = 0 ; calories = 0 ; exercise = 0
         print(serializer_data)
         if len(serializer_data['water_info']) != 0:
             for i in serializer_data['water_info']:
@@ -106,20 +107,26 @@ class DailyViewsets(ViewSet):
                 exercise += (int(i['sport_time']) * tmp[i['strong']])
         from Member.models import HealthTarget
         ob = HealthTarget.objects.get(uid=uid)
-        
+
         return {
-            "water_target":ob.water_intake,
-            'water_remain':ob.water_intake-water,
-            'water_now':water,
-            "calories_target":ob.calories_intake,
-            'calories_remain':ob.calories_intake-calories,
-            "calories_now":calories,
-            "exercise_target":ob.exercise_duration,
-            "exercise_remain":ob.exercise_duration-exercise,
-            "exercise_now":exercise
+            "week":{
+
+            },
+            "record":{
+                "water_target":ob.water_intake,
+                'water_remain':ob.water_intake-water,
+                'water_now':water,
+                "calories_target":ob.calories_intake,
+                'calories_remain':ob.calories_intake-calories,
+                "calories_now":calories,
+                "exercise_target":ob.exercise_duration,
+                "exercise_remain":ob.exercise_duration-exercise,
+                "exercise_now":exercise
             }
-    
+            }
+
     def __get_current_week_dates():
+        """確認使用者的填寫紀錄"""
         from datetime import datetime,timedelta
         # 取得當天日期
         today = datetime.today()
@@ -136,4 +143,5 @@ class DailyViewsets(ViewSet):
             # 將當天加入列表
             week_dates.append(start_of_week + timedelta(days=i))
         # 回傳一週的日期列表
+        print(week_dates)
         return week_dates

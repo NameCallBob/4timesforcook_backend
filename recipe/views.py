@@ -50,15 +50,9 @@ class RecipeViewsets(viewsets.ModelViewSet):
             sentence = request.data['sentence']
         except KeyError:
             frontend_error.KeyError()
-<<<<<<< HEAD
         from deep_translator import GoogleTranslator
         trans_sentence = GoogleTranslator(source="zh-TW",target="english").translate(sentence)
         trans_sentence = "Can you recommend a recipe for a comforting lentil soup?"
-=======
-        # from deep_translator import GoogleTranslator
-        trans_sentence = "I want to eat strawberry dishes"
-        # trans_sentence = GoogleTranslator(source="zh-TW",target="english").translate(sentence)
->>>>>>> 4fb6132b440573c7d93c50e4eca66ea6abe7f5e3
         label = self.__modelPredict(trans_sentence)
         return Response(status=200, data={"sentence": trans_sentence, "label": label})
         # params = [request.data.get("sentence", ""), request.data.get("time", ""), request.data.get("tags", ""), request.data.get("health_choice", ""),]
@@ -74,11 +68,7 @@ class RecipeViewsets(viewsets.ModelViewSet):
         else:
             return Response(status=404, data="無資料")
 
-<<<<<<< HEAD
     def __modelPredict(self, sentence) -> list:
-=======
-    def __modelPredict(self, text) -> list:
->>>>>>> 4fb6132b440573c7d93c50e4eca66ea6abe7f5e3
         """利用訓練好的Bert模型"""
         from recipe.BertModel.dataset import align_word_ids, ids_to_labels, tokenizer
         from recipe.BertModel.model import BertModel
@@ -97,20 +87,12 @@ class RecipeViewsets(viewsets.ModelViewSet):
         else:
             print("USE CPU PREDICT")
 
-<<<<<<< HEAD
         text = tokenizer(sentence, padding='max_length',
-=======
-        text = tokenizer(text, padding='max_length',
->>>>>>> 4fb6132b440573c7d93c50e4eca66ea6abe7f5e3
                          max_length=128, truncation=True, return_tensors="pt")
 
         mask = text['attention_mask'].to(device)
         input_id = text['input_ids'].to(device)
-<<<<<<< HEAD
         label_ids = torch.Tensor(align_word_ids(sentence)).unsqueeze(0).to(device)
-=======
-        label_ids = torch.Tensor(align_word_ids(text)).unsqueeze(0).to(device)
->>>>>>> 4fb6132b440573c7d93c50e4eca66ea6abe7f5e3
 
         logits = model(input_id, mask, None)
         logits_clean = logits[0][label_ids != -100]
@@ -119,7 +101,6 @@ class RecipeViewsets(viewsets.ModelViewSet):
         prediction_label = [ids_to_labels[i] for i in predictions]
 
         return prediction_label
-<<<<<<< HEAD
 
 
     def __searchDB(self,request,sentence,query = None):
@@ -130,18 +111,6 @@ class RecipeViewsets(viewsets.ModelViewSet):
         """
         from recipe.data.KBQA_run import DB_search
 
-=======
-        
-    
-    def __searchDB(self,request,sentence,query = None):
-        """
-        依照模型給予的參數進行搜尋
-        sentence -> User input 
-        model_query -> BertModel's predicted Tag 
-        """
-        from recipe.data.KBQA_run import DB_search
-        
->>>>>>> 4fb6132b440573c7d93c50e4eca66ea6abe7f5e3
         list_id = DB_search().run(query)
         if list_id != 0 and type(list_id) == list:
             """執行成功"""
