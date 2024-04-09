@@ -92,7 +92,7 @@ class Prefer(models.Model):
     uid = models.ForeignKey(MemberP,on_delete=models.CASCADE,unique=True)
     target = models.TextField("飲食目標",null=False)
     restrict = models.TextField("飲食限制")
-    prefer = models.TextField("飲食偏好")
+    prefer = models.IntegerField("飲食偏好",choices=TARGET_OPTIONS)
     Nut_need = models.TextField("營養需求")
     update_time = models.DateTimeField(auto_now=True)
 

@@ -75,7 +75,11 @@ class Member_use_Viewset(viewsets.ViewSet):
         else:
             return Response({'error': 'account or password Not Correctly'}, status=400)
 
+<<<<<<< HEAD
     @action(methods=['post'], detail=False ,authentication_classes=[])
+=======
+    @action(methods=['post'], detail=False ,authentication_classes=[permissions.AllowAny])
+>>>>>>> 4fb6132b440573c7d93c50e4eca66ea6abe7f5e3
     def register(self, request):
         """註冊"""
         try:

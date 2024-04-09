@@ -15,3 +15,4 @@
 
 # 模型(檔案太大)
 /recipe/BertModel/model.pth
+*.pth
