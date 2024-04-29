@@ -6,11 +6,11 @@ label_all_tokens = False
 
 
 labels_to_ids = {
-    'O': 0,
-    "num": 1,
-    "B-ING":2,"B-DIS":3,"B-NUT":4,
-    "B-ALG":5,"B-STP":6,"B-TME":7,
-    "B-UDO":8,"B-TAG":9,
+        'O': 0,
+        "num": 1,
+        "B-ING":2,"B-DIS":3,"B-NUT":4,
+        "B-ALG":5,"B-STP":6,"B-TME":7,
+        "B-UDO":8,"B-TAG":9,"I-ING":10,"I-TAG":11
 }
 
 ids_to_labels = {v: k for k, v in labels_to_ids.items()}

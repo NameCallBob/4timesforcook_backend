@@ -199,8 +199,11 @@ class DailyViewsets(ViewSet):
             elif type == 1 :
                 ob.calories_sum = ob.calories_sum + int(request.data['calories'])
             elif type == 2 :
-                d = {1:2,3:5,3:7}
+                d = {1:2,2:5,3:7}
                 strong = d[request.data['strong']]
                 ob.exercise_sum = ob.exercise_sum + int(strong*request.data['sport_time'])
             ob.save()
             return Response(status=200,data="ok")
+
+
+

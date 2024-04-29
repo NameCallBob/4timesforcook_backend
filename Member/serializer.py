@@ -129,3 +129,9 @@ class ForgotPasswordSerializer(serializers.Serializer):
                 return False
         else:
             return False
+
+from Member.models import InputRecord
+class InputRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InputRecord
+        fields = ['date','calories_sum','water_sum','exercise_sum','status']
