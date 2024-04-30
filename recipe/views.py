@@ -75,8 +75,9 @@ class RecipeViewsets(viewsets.ModelViewSet):
         except:
             return Response(status=400,data="請確認是否符合GET的參數傳遞方式")
         recipe_ob = Recipe_Ob.objects.filter(rid=recipe_id)
-        if recipe_ob.count() == 1:
-            res = RecipeSerializer(recipe_ob, many=True)
+        if recipe_ob.count()  >= 1:
+            # 由於先前在新增食譜時未將重複食譜刪除，故先以這處理此問題
+            res = RecipeSerializer(recipe_ob[0], many=True)
             # print(res.data)
             return Response(status=200, data=res.data)
         else:
