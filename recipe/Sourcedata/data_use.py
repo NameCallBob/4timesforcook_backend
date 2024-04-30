@@ -221,13 +221,14 @@ class Trans_db(DataBase):
         from recipe.models import Chinese_Ob
         for index, row in data.iterrows():
             try:
+                
                 Chinese_Ob.objects.create(
                     rid=row['id'],
-                    name= self.translate_to_chinese(1,row['name']),
-                    tags=self.translate_to_chinese(5,row['tags']),
-                    steps=self.translate_to_chinese(2,row['steps']),
-                    description=self.translate_to_chinese(3,row['description']),
-                    ingredients=self.translate_to_chinese(4,row['ingredients'])
+                    name= self.__nullCheck(self.translate_to_chinese(1,row['name'])),
+                    tags=self.__nullCheck(self.translate_to_chinese(5,row['tags'])),
+                    steps=self.__nullCheck(self.translate_to_chinese(2,row['steps'])),
+                    description=self.__nullCheck(self.translate_to_chinese(3,row['description'])),
+                    ingredients=self.__nullCheck(self.translate_to_chinese(4,row['ingredients']))
                 ).save()
             except Exception as e:
                 self.ErrorCount+=1
@@ -245,6 +246,7 @@ class Trans_db(DataBase):
                     res =GoogleTranslator(
                         source="english",target="zh-TW"
                         ).translate(text)
+                    
             except Exception as e :
                 try:
                     res=""
@@ -277,7 +279,12 @@ class Trans_db(DataBase):
                             except:
                                 res.append("字數過多，無法呈現")
         return res
-
+    
+    def __nullCheck(self,data):
+        """發現到有些資料會出現null的狀況，先進行判斷後再繼續"""
+        if data is None or data is "":
+            return  "no information！"
+        return data
 
 if __name__=="__main__":
     # DataBase().know_value()
