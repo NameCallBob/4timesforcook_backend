@@ -282,7 +282,7 @@ class Trans_db(DataBase):
     
     def __nullCheck(self,data):
         """發現到有些資料會出現null的狀況，先進行判斷後再繼續"""
-        if data is None or data is "":
+        if data == None or data == "":
             return  "no information！"
         return data
 
