@@ -70,7 +70,10 @@ class RecipeViewsets(viewsets.ModelViewSet):
     @action(methods=['get'], authentication_classes=[],permission_classes=[], detail=False)
     def get_id(self, request):
         """透過食譜ID得取食譜資訊"""
-        recipe_id = request.GET['rid']
+        try:
+            recipe_id = request.GET['rid']
+        except:
+            return Response(status=400,data="請確認是否符合GET的參數傳遞方式")
         recipe_ob = Recipe_Ob.objects.filter(rid=recipe_id)
         if recipe_ob.count() == 1:
             res = RecipeSerializer(recipe_ob, many=True)
