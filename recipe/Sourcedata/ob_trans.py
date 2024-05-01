@@ -89,6 +89,11 @@ if __name__ == "__main__":
     steps = []
     description =[]
     ingredients = []
+    # 進度條
+    from tqdm import tqdm
+    num_all = int(d1.size//13) + 1
+    progress_bar = tqdm(total=num_all, desc="進度", unit="任務")
+    test = 0
     # pandas
     for index, row in d1.iterrows():
         rid.append(row['id'])
@@ -97,7 +102,9 @@ if __name__ == "__main__":
         steps.append(nullCheck(translate_to_chinese(4,row['steps'])))
         description.append(nullCheck(translate_to_chinese(3,row['description'])))
         ingredients.append(nullCheck(translate_to_chinese(6,row['ingredients'])))
+        progress_bar.update(1)
 
+    
     new_data = pd.DataFrame(
          {
               "id":rid,
@@ -109,3 +116,5 @@ if __name__ == "__main__":
          }
     )
     new_data.to_csv("./res/trans_db.csv")
+    progress_bar.update(1)
+    progress_bar.close()
