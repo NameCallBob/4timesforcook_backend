@@ -5,9 +5,10 @@ class Record_Search(models.Model):
     """用於儲存使用者提出查詢的紀錄"""
     # 自動增量的索引欄位
     index = models.AutoField(primary_key=True, unique=True, editable=False)
-    ip_address = models.TextField()
-    recordId = models.TextField()
-    searchText = models.TextField()
+    ip_address = models.TextField(null=True)
+    recordId = models.TextField(null=True)
+    searchText = models.TextField(null=True)
+    searchEngText = models.TextField(null=True)
 
 
 class Record_DataChange(models.Model):
