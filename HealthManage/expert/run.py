@@ -16,8 +16,13 @@ class ruleResult:
         engine.reset()
         engine.declare(SymptonFact(name = symptom))
         engine.run()
-
         return engine.res
+    
+    # def __Search(self,query):
+    #     """
+    #     取得使用者查詢參數的結果
+    #     """
+
 
     def main(self,type_expert,data):
         """Main function"""

@@ -107,7 +107,6 @@ class DB_search:
             print(res)
             return res
 
-
     def __process_sentence(self,type:int,words, entities) -> list:
             """
             判別是否有B、I的實體
@@ -127,10 +126,62 @@ class DB_search:
             sentence = set(sentence);sentence=list(sentence)
             return sentence
 
+    def __process_UserQuery(self,data,user_query):
+        """
+        處理使用給予的條件式判斷
+        @data -> 先前處理的使用者參數
+        @user_query -> 使用者輸入的參數
+        """
+        if user_query == []:
+            # 如果使用者沒有輸入任何參數，直接回傳原本的參數
+            return data
+        data_object = data['object'] ; data_attr = data['Attribute']
+        # 前端的制定的參數
+        # 食譜標籤
+        tags = [
+            # 料理風格
+            "japanese","chinese","korean","spain","italian","'german","mexico"
+        ]
+        time = [
+            # 做飯時間
+            "15-minutes-or-less","30-minutes-or-less","60-minutes-or-less",
+        ]
+        # 健康選擇
+        health = [
+        'alcohol-free','low-calorie','low-protein',
+        'high-protein','gluten-free''low-sodium','low-cholesterol'
+        ]
+        for i in user_query:
+            # 食譜標籤
+            if i in tags:
+                if i not in data_object['tags']:
+                    data_object['tags'].append(i)
+            # 食譜時間
+            elif i in time:
+                data_attr['minutes'] = int(i[0:2])
+            elif i == "time-to-make":
+                data_attr['minutes_up'] = 60
+            # 健康因素
+            elif i in health :
+                pass
 
-    def run(self,sentence,labels):
+    def run(self,sentence,labels,user_query):
+        """
+        sentence -> 以翻譯過的句子
+        labels -> 模型預測的label
+        user_query -> 使用者點選的條件式
+        """
         try:
-            data = self.__type(sentence,labels)
+            # 如果有翻譯英文，代表模型有預測，從中拿取參數
+            data={
+                "object":{},
+                "Attribute":{}
+                 }
+            if sentence != "":
+                data = self.__type(sentence,labels)
+
+            data = self.__process_UserQuery(data,user_query)
+
             querysetA , querysetB = self.__query_set(data)
 
             # 實體搜尋
@@ -149,6 +200,6 @@ class DB_search:
             if res_id == []:
                 res_id = [47366,67547,23850]
             return res_id
-        
+
         except Exception as e :
             print(f"KBQA輸出出現問題，問題如下:{e}")

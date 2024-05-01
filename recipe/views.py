@@ -48,24 +48,34 @@ class RecipeViewsets(viewsets.ModelViewSet):
     def get(self, request):
         """給予前端食譜資料"""
         from answer import frontend_error
+        # 檢查變數是否上傳正常
         try:
-            sentence = request.data['sentence']
-            object = request.data['object']
-            attribute = request.data['attribute']
+            sentence = request.data.get("sentence",'')
+            user_query = request.data.get('user_query','')
+            UserIP = request.META['REMOTE_ADDR']
         except KeyError:
             frontend_error.KeyError()
-        from deep_translator import GoogleTranslator
-        trans_sentence = GoogleTranslator(source="zh-TW",target="english").translate(sentence)
-        # 翻譯
-        from recipe.BertModel.main import modelPredict
-
-        label = modelPredict(trans_sentence)
-        from recipe.DB_query import DB_search
-        rid = DB_search().run(trans_sentence,label)
-        ob = Chinese_Ob.objects.filter(rid__in=rid)
-        serializer = ChineseRecipeSerializer(ob,many=True)
-        return Response(status=200, data=serializer.data)
-        # params = [request.data.get("sentence", ""), request.data.get("time", ""), request.data.get("tags", ""), request.data.get("health_choice", ""),]
+        # 先判斷使用者是否有傳任何東西
+        if sentence=='' and user_query == '':
+            return Response(status=400,data="使用者沒有輸入任何參數")
+        # 利用套件翻譯
+        if sentence != '':
+            from deep_translator import GoogleTranslator
+            trans_sentence = GoogleTranslator(source="zh-TW",target="english").translate(sentence)
+            # 模型實體標記
+            from recipe.BertModel.main import modelPredict
+            label = modelPredict(trans_sentence)
+        else:
+            trans_sentence = "None" ; label=[]
+        # 依照實體去做參數設定
+        data = self.__searchDB(
+            UserIP=UserIP,
+            sentence=sentence,
+            trans_sentence=trans_sentence,
+            user_query = user_query,
+            label = label
+        )
+        return Response(status=200, data=data)
 
     @action(methods=['get'], authentication_classes=[],permission_classes=[], detail=False)
     def get_id(self, request):
@@ -74,30 +84,39 @@ class RecipeViewsets(viewsets.ModelViewSet):
             recipe_id = request.GET['rid']
         except:
             return Response(status=400,data="請確認是否符合GET的參數傳遞方式")
-        recipe_ob = Recipe_Ob.objects.filter(rid=recipe_id)
-        if recipe_ob.count()  >= 1:
+        recipe_ob = Chinese_Ob.objects.filter(rid=recipe_id)
+        if recipe_ob.count()  == 1:
             # 由於先前在新增食譜時未將重複食譜刪除，故先以這處理此問題
-            res = RecipeSerializer(recipe_ob[0], many=True)
+            res = ChineseRecipeSerializer(recipe_ob, many=True)
             # print(res.data)
             return Response(status=200, data=res.data)
         else:
             return Response(status=404, data="無資料")
 
-    def __searchDB(self,request,sentence,query = None):
+    def __searchDB(self,UserIP,sentence,trans_sentence,user_query,label):
         """
         依照模型給予的參數進行搜尋
-        sentence -> User input
-        model_query -> BertModel's predicted Tag
+        @sentence -> User input
+        @trans_sentence -> 翻譯為英文的句子
+        @user_query -> 使用者的條件判斷參數
+        @labels -> BertModel's predicted Tag
         """
         from recipe.DB_query import DB_search
 
-        list_id = DB_search().run(query)
+        list_id = DB_search().run(trans_sentence,label,user_query)
+
         if list_id != 0 and type(list_id) == list:
             """執行成功"""
-            res = Recipe_Ob.objects.filter(rid__in=list_id)
-            record_().create_record(search=request.data.get("sentence", "僅使用條件判斷"), res=str(list_id),ip = request.META['REMOTE_ADDR'])
-            res = RecipeSerializer(res, many=True)
-            return Response(status=200, data=res.data)
+            ob = Chinese_Ob.objects.filter(rid__in=list_id)
+            if sentence == '':
+                sentence="僅使用條件判斷"
+            record_().create_record(
+                search=sentence,
+                trans_sentence=trans_sentence,
+                res=str(list_id),
+                ip = UserIP)
+            res = ChineseRecipeSerializer(ob, many=True)
+            return res.data
         else:
-            print(list_id)
-            return Response(status=500, data="出問題摟，請洽系統管理員")
+            print("list_id無任何輸出")
+            return 0
