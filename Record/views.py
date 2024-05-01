@@ -11,8 +11,14 @@ import answer
 
 class record_:
 
-    def create_record(ip, search, res):
-        """記錄使用者輸入輸出內容"""
+    def create_record(ip, search,search_Eng, res):
+        """
+        記錄使用者輸入輸出內容
+        @ip -> 使用者IP
+        @search -> 中文輸入
+        @search_Eng -> 翻譯為英文
+        @res -> 最後的結果
+        """
         output_rId = "TEST{0:05d}".format(
             Record_Search.objects.all().count()+1)
         try:
@@ -20,7 +26,8 @@ class record_:
             Record_Search(
                 recordId=output_rId,
                 ip_address=ip,
-                searchText=search
+                searchText=search,
+                searchEngText = search_Eng
             ).save()
             Record_Output(
                 recordId=output_rId,
