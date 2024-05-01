@@ -18,6 +18,7 @@ class DailyViewsets(ViewSet):
         serializer = UserDailyInfoSerializer([uid,1])
         res = self.__sumUserInputRecord(uid,serializer.data)
         return Response(data=res,status=200)
+
     @action(methods=['get'],permission_classes=[IsAuthenticated],detail=False)
     def recipe(self,request):
         from recipe.models import Recipe_Ob ; from recipe.serializer import RecipeSerializer
@@ -204,6 +205,3 @@ class DailyViewsets(ViewSet):
                 ob.exercise_sum = ob.exercise_sum + int(strong*request.data['sport_time'])
             ob.save()
             return Response(status=200,data="ok")
-
-
-

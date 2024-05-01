@@ -6,6 +6,7 @@ class DB_search:
 
     def __query_set(self,data:dict):
         """搜尋參數設置"""
+        # ORM查詢條件文獻:https://www.cnblogs.com/zheng-weimin/p/10230305.html
         # 實體參數
         queryA = Q()
         # 屬性參數
@@ -26,6 +27,8 @@ class DB_search:
             d_at = data['Attribute']
             if d_at.get('minutes'):
                 queryB &= Q(minutes__lte=d_at['minutes'])
+            if d_at.get("minutes_up"):
+                queryB &= Q(minutes__gt=d_at['minutes'])
             # if d_at.get("nutrition"):
             #     queryB &= Q(nutrition__lte=d_at['nutrition'])
             # 營養數值
@@ -67,7 +70,6 @@ class DB_search:
         words = sentence.split()
         clean_labels = set([x for x in labels if x != 'O']);
         clean_labels = list(clean_labels)
-        print(clean_labels)
         # 若模型有判斷出實體
         if len(clean_labels) == 0:
             # 無實體，隨機給予
@@ -103,8 +105,6 @@ class DB_search:
                 # 找到特定標籤對應的單詞
                 tag_words = find_tag_words(words, labels, target_tag)
                 res["object"][labels_to_columns[target_tag]] = tag_words
-
-            print(res)
             return res
 
     def __process_sentence(self,type:int,words, entities) -> list:
@@ -163,7 +163,15 @@ class DB_search:
                 data_attr['minutes_up'] = 60
             # 健康因素
             elif i in health :
+                from HealthManage.expert.run import ruleResult
+                expert_data = ruleResult().main(3,i)
+                if data != None and expert_data != None:
+                    if expert_data['index'] == "object":
+                        if expert_data['content'] not in data_object[expert_data['columns']]:
+                            data_object[expert_data['columns']].append(expert_data['content'])
+            else:
                 pass
+        return data
 
     def run(self,sentence,labels,user_query):
         """
@@ -171,35 +179,34 @@ class DB_search:
         labels -> 模型預測的label
         user_query -> 使用者點選的條件式
         """
-        try:
-            # 如果有翻譯英文，代表模型有預測，從中拿取參數
-            data={
+        data={
                 "object":{},
                 "Attribute":{}
-                 }
-            if sentence != "":
-                data = self.__type(sentence,labels)
+            }
+        # 如果有翻譯英文，代表模型有預測，從中拿取參數
+        if sentence != "":
+            data = self.__type(sentence,labels)
+            if data == 0:
+                print("無實體")
+                return [47366,67547,23850]
 
-            data = self.__process_UserQuery(data,user_query)
+        data = self.__process_UserQuery(data,user_query)
+        print(data)
+        querysetA , querysetB = self.__query_set(data)
 
-            querysetA , querysetB = self.__query_set(data)
+        # 實體搜尋
+        resultsA = Recipe_Ob.objects.filter(querysetA)
 
-            # 實體搜尋
-            resultsA = Recipe_Ob.objects.filter(querysetA)
+        # 屬性搜尋
+        resultsB = Recipe_At.objects.filter(querysetB)
 
-            # 屬性搜尋
-            resultsB = Recipe_At.objects.filter(querysetB)
+        # 合併結果
+        final_results = resultsA.filter(rid__in=resultsB.values('rid')).order_by('?')
 
-            # 合併結果
-            final_results = resultsA.filter(rid__in=resultsB.values('rid'))
+        # 按照分數排序
+        final_results = final_results[0:3]
+        res_id = [int(result.rid) for result in final_results]
 
-            # 按照分數排序
-            final_results = final_results[0:3]
-            res_id = [result.rid for result in final_results]
-
-            if res_id == []:
-                res_id = [47366,67547,23850]
-            return res_id
-
-        except Exception as e :
-            print(f"KBQA輸出出現問題，問題如下:{e}")
+        if res_id == []:
+            res_id = [47366,67547,23850]
+        return res_id

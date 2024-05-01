@@ -66,7 +66,7 @@ class RecipeViewsets(viewsets.ModelViewSet):
             from recipe.BertModel.main import modelPredict
             label = modelPredict(trans_sentence)
         else:
-            trans_sentence = "None" ; label=[]
+            trans_sentence = "" ; label=[]
         # 依照實體去做參數設定
         data = self.__searchDB(
             UserIP=UserIP,
@@ -109,12 +109,13 @@ class RecipeViewsets(viewsets.ModelViewSet):
             """執行成功"""
             ob = Chinese_Ob.objects.filter(rid__in=list_id)
             if sentence == '':
-                sentence="僅使用條件判斷"
+                sentence="僅使用條件判斷";trans_sentence="None"
             record_().create_record(
                 search=sentence,
-                trans_sentence=trans_sentence,
+                search_Eng=trans_sentence,
                 res=str(list_id),
-                ip = UserIP)
+                ip = UserIP
+            )
             res = ChineseRecipeSerializer(ob, many=True)
             return res.data
         else:

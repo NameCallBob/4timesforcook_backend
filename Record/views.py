@@ -11,7 +11,7 @@ import answer
 
 class record_:
 
-    def create_record(ip, search,search_Eng, res):
+    def create_record(self,ip, search,search_Eng, res):
         """
         記錄使用者輸入輸出內容
         @ip -> 使用者IP
