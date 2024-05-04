@@ -77,11 +77,10 @@ def nullCheck(data):
         return  "no information！"
     return data
 
-
-if __name__ == "__main__":
-    """跑翻譯資料"""
+def oneThread(d1,file_num):
+    #  僅使用單一執行跑翻譯
+    #  測試次數(確認是否正常運作)
     test = 0
-    d1,d2 = DataBase().resource()
     # 翻成中文的必要資料
     rid = []
     name = []
@@ -91,9 +90,8 @@ if __name__ == "__main__":
     ingredients = []
     # 進度條
     from tqdm import tqdm
-    num_all = int(d1.size//13) + 1
-    progress_bar = tqdm(total=num_all, desc="進度", unit="任務")
-    test = 0
+    num_all = int(d1.shape[0]) + 1
+    progress_bar = tqdm(total=num_all, desc=f"第{file_num}個執行緒進度", unit="筆")
     # pandas
     for index, row in d1.iterrows():
         rid.append(row['id'])
@@ -104,7 +102,7 @@ if __name__ == "__main__":
         ingredients.append(nullCheck(translate_to_chinese(6,row['ingredients'])))
         progress_bar.update(1)
 
-    
+
     new_data = pd.DataFrame(
          {
               "id":rid,
@@ -115,6 +113,48 @@ if __name__ == "__main__":
               "ingredients":ingredients,
          }
     )
-    new_data.to_csv("./res/trans_db.csv")
+    new_data.to_csv(f"./translate_res/trans_db{file_num}.csv")
     progress_bar.update(1)
     progress_bar.close()
+
+
+
+def datasplit():
+    d1,d2 = DataBase().resource()
+    chunk_size = d1.shape[0]//10
+    # OUTPUT:23163
+    data_num = [0]
+    for i in range(1,11):
+        if i == 10 :
+            data_num.append(d1.shape[0])
+        else:
+            data_num.append(chunk_size*i)
+    chunks = []
+    for i in range(len(data_num)-1):
+         chunks.append(d1.iloc[data_num[i]:data_num[i+1]])
+    return chunks
+
+def multiTrhead():
+    """
+    發現單一執行，跑的速度會處理到20天
+
+    因此將要翻譯的檔案分為10份進行翻譯及處理
+    """
+    import concurrent.futures
+    data = datasplit()
+    # 使用多執行緒進行翻譯
+    import threading
+    threads = []
+    for i in range(len(data)):
+        thread = threading.Thread(target=oneThread, args=(data[i],i,))
+        thread.start()
+        threads.append(thread)
+    for i in threads:
+        i.join()
+
+
+
+
+if __name__ == "__main__":
+    """跑翻譯資料"""
+    multiTrhead()
