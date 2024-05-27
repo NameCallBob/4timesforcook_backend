@@ -21,7 +21,7 @@ class DataBase:
             try:
                 d1 = pd.read_csv(os.path.join(current,"recipe/Sourcedata/data/RAW_recipes.csv"))
                 d2 = pd.read_csv(os.path.join(current,"recipe/Sourcedata/data/Food Ingredients and Recipe Dataset with Image Name Mapping.csv"))
-            except FileNotFoundError:
+            except FileNotFoundError as r :
                 # 請後端自己調整
                 raise FileNotFoundError(f"請確認是否有食譜檔案在資料夾中，路徑為下{r}")
 
@@ -221,7 +221,7 @@ class Trans_db(DataBase):
         from recipe.models import Chinese_Ob
         for index, row in data.iterrows():
             try:
-                
+
                 Chinese_Ob.objects.create(
                     rid=row['id'],
                     name= self.__nullCheck(self.translate_to_chinese(1,row['name'])),
@@ -246,7 +246,7 @@ class Trans_db(DataBase):
                     res =GoogleTranslator(
                         source="english",target="zh-TW"
                         ).translate(text)
-                    
+
             except Exception as e :
                 try:
                     res=""
@@ -279,7 +279,7 @@ class Trans_db(DataBase):
                             except:
                                 res.append("字數過多，無法呈現")
         return res
-    
+
     def __nullCheck(self,data):
         """發現到有些資料會出現null的狀況，先進行判斷後再繼續"""
         if data == None or data == "":

@@ -56,7 +56,7 @@ class DB_search:
 
     def __type(self,sentence:str,labels:list):
         """
-        將label轉為query
+        將前端條件判斷label轉為KBQA query
         """
         labels_to_columns = {
         "num": 1,
@@ -173,6 +173,11 @@ class DB_search:
                 pass
         return data
 
+    def getUserQuery(self,object):
+        """依照使用者健康資訊添加篩選"""
+        pass
+
+
     def run(self,sentence,labels,user_query):
         """
         sentence -> 以翻譯過的句子
@@ -188,7 +193,7 @@ class DB_search:
             data = self.__type(sentence,labels)
             if data == 0:
                 print("無實體")
-                return [47366,67547,23850]
+                return [47366,218967,23850]
 
         data = self.__process_UserQuery(data,user_query)
         print(data)
@@ -208,5 +213,6 @@ class DB_search:
         res_id = [int(result.rid) for result in final_results]
 
         if res_id == []:
-            res_id = [47366,67547,23850]
+            # 若BERT未尋找出任何東西，此為替代方案。
+            res_id = [47366,67547,432077]
         return res_id

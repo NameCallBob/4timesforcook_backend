@@ -21,11 +21,14 @@ class DailyViewsets(ViewSet):
 
     @action(methods=['get'],permission_classes=[IsAuthenticated],detail=False)
     def recipe(self,request):
-        from recipe.models import Recipe_Ob ; from recipe.serializer import RecipeSerializer
+        from recipe.models import Chinese_Ob ; from recipe.serializer import ChineseRecipeSerializer
         # 隨機排序並取第一筆
-        allob = Recipe_Ob.objects.all()
+        # allob = Recipe_Ob.objects.all()
+        allob = Chinese_Ob.objects.filter(
+            rid = "83873"
+        )
         random_object = allob.order_by('?').first()
-        serializer = RecipeSerializer(random_object)
+        serializer = ChineseRecipeSerializer(random_object)
         return Response(status=200,data=serializer.data)
 
     @action(methods=['post'],permission_classes = [IsAuthenticated] , detail=False)
@@ -165,7 +168,10 @@ class DailyViewsets(ViewSet):
                     (target.water_intake - tmp_ob[0].water_sum) < 500 and  \
                     (target.exercise_duration - tmp_ob[0].exercise_sum < 300) \
                     ):
-                        if tmp_ob[0].calories_sum < -200 :
+                        # 如果卡路里攝取的量與目標相差正負200
+                        if (target.calories_intake-tmp_ob[0].calories_sum) > -200 \
+                            and\
+                           (target.calories_intake-tmp_ob[0].calories_sum) < 200 :
                             res[length] = 3
                         else:
                             res[length] = 2

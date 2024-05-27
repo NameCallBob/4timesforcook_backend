@@ -3,6 +3,8 @@
 """
 import pandas as pd
 import os
+from deep_translator import GoogleTranslator
+import nltk
 
 class DataBase:
     """讀取Kaggle資料"""
@@ -20,61 +22,64 @@ class DataBase:
             try:
                 d1 = pd.read_csv(os.path.join(current,"recipe/Sourcedata/data/RAW_recipes.csv"))
                 d2 = pd.read_csv(os.path.join(current,"recipe/Sourcedata/data/Food Ingredients and Recipe Dataset with Image Name Mapping.csv"))
-            except FileNotFoundError:
+            except FileNotFoundError as r :
                 # 請後端自己調整
                 raise FileNotFoundError(f"請確認是否有食譜檔案在資料夾中，路徑為下{r}")
 
         return d1 , d2
 
+def translatelotWord(text):
+    """大量文本翻譯_拆解"""
+
+    if type(text) == list:
+        # 型態為矩陣去做翻譯
+        res=[]
+        for i in text:
+            x = nltk.tokenize.sent_tokenize(i)
+            for sentence in x :
+                try:
+                    tmp = GoogleTranslator(
+                    source="english",target="zh-TW"
+                    ).translate(sentence)
+                    res.append(tmp)
+                except Exception as e:
+                    print(e)
+                    res.append("字數過多，無法呈現")
+        return res
+
+    elif type(text) == str:
+        # 型態為名字去做翻譯
+        tmp = GoogleTranslator(
+            source="english",target="zh-TW"
+        ).translate(text)
+        return tmp
+
+
+
 def translate_to_chinese(type,text):
         """翻譯文字"""
-        from deep_translator import GoogleTranslator
-        import nltk
-        if type in [1,3]:
+        if type == 1 or type == 3:
             # 字比較少
             try:
-                if text == "":
-                    res="沒有文字介紹喔!"
+                if text == "" or text == "nan":
+                    return "沒有文字介紹喔!"
                 else:
-                    res =GoogleTranslator(
+                    return GoogleTranslator(
                         source="english",target="zh-TW"
-                        ).translate(text)
-
+                    ).translate(text)
             except Exception as e :
-                try:
-                    res=""
-                    x = nltk.tokenize.sent_tokenize(text)
-                    for sentence in x :
-                                try:
-                                        tmp = GoogleTranslator(
-                                            source="english",target="zh-TW"
-                                            ).translate(sentence)
-                                        res += tmp
-                                except:
-                                    res += ("字數過多，無法呈現")
-                except:
-                    res = "字數過多，無法呈現"
+                print(f"訊息出錯{e}")
+                return translatelotWord(text)
         else:
-            # 字多採分割的方式翻譯
-                res = []
-                for i in eval(text):
-                    # https://stackoverflow.com/questions/70673172/how-to-solve-text-must-be-a-valid-text-with-maximum-5000-character-otherwise-it
-                    x = nltk.tokenize.sent_tokenize(i)
-                    for sentence in x :
-                            try:
-                                res.append(
-                                    GoogleTranslator(
-                                        source="english",target="zh-TW"
-                                        ).translate(sentence)
-                                    )
-                            except:
-                                res.append("字數過多，無法呈現")
-        return res
+            tmp = []
+            for i in eval(text):
+                tmp.append(translatelotWord(i))
+            return tmp
 
 def nullCheck(data):
     """發現到有些資料會出現null的狀況，先進行判斷後再繼續"""
     if data == None or data == "":
-        return  "no information！"
+        return  "no information!"
     return data
 
 def oneThread(d1,file_num):
@@ -92,15 +97,27 @@ def oneThread(d1,file_num):
     from tqdm import tqdm
     num_all = int(d1.shape[0]) + 1
     progress_bar = tqdm(total=num_all, desc=f"第{file_num}個執行緒進度", unit="筆")
+
     # pandas
     for index, row in d1.iterrows():
+        trans_name = nullCheck(translate_to_chinese(1,row['name']))
+        trans_tags = nullCheck(translate_to_chinese(2,row['tags']))
+        trans_step = nullCheck(translate_to_chinese(4,row['steps']))
+        trans_des = nullCheck(translate_to_chinese(3,row['description']))
+        trans_ing = nullCheck(translate_to_chinese(6,row['ingredients']))
+
         rid.append(row['id'])
-        name.append(nullCheck(translate_to_chinese(1,row['name'])))
-        tags.append(nullCheck(translate_to_chinese(2,row['tags'])))
-        steps.append(nullCheck(translate_to_chinese(4,row['steps'])))
-        description.append(nullCheck(translate_to_chinese(3,row['description'])))
-        ingredients.append(nullCheck(translate_to_chinese(6,row['ingredients'])))
+        name.append(trans_name)
+        tags.append(trans_tags)
+        steps.append(trans_step)
+        description.append(trans_des)
+        ingredients.append(trans_ing)
+
         progress_bar.update(1)
+        if test == 10:
+            break
+
+
 
 
     new_data = pd.DataFrame(
@@ -113,7 +130,9 @@ def oneThread(d1,file_num):
               "ingredients":ingredients,
          }
     )
-    new_data.to_csv(f"./translate_res/trans_db{file_num}.csv")
+
+    current = os.getcwd()
+    new_data.to_csv(os.path.join(current,"recipe","Sourcedata","translate_res",f"trans_db{file_num}.csv"))
     progress_bar.update(1)
     progress_bar.close()
 
@@ -121,26 +140,25 @@ def oneThread(d1,file_num):
 
 def datasplit():
     d1,d2 = DataBase().resource()
-    chunk_size = d1.shape[0]//10
-    # OUTPUT:23163
+    chunk_size = d1.shape[0]//50
     data_num = [0]
-    for i in range(1,11):
-        if i == 10 :
+    for i in range(1,51):
+        if i == 50 :
             data_num.append(d1.shape[0])
         else:
             data_num.append(chunk_size*i)
+
     chunks = []
     for i in range(len(data_num)-1):
          chunks.append(d1.iloc[data_num[i]:data_num[i+1]])
     return chunks
 
-def multiTrhead():
+def multiThread():
     """
     發現單一執行，跑的速度會處理到20天
 
-    因此將要翻譯的檔案分為10份進行翻譯及處理
+    因此將要翻譯的檔案分為20份進行翻譯及處理
     """
-    import concurrent.futures
     data = datasplit()
     # 使用多執行緒進行翻譯
     import threading
@@ -157,4 +175,4 @@ def multiTrhead():
 
 if __name__ == "__main__":
     """跑翻譯資料"""
-    multiTrhead()
+    multiThread()

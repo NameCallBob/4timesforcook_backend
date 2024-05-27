@@ -29,6 +29,12 @@ class DefaultRunViewsets(viewsets.ModelViewSet):
             print(f"其問題如：{e}")
             return (Response(status=500, data=f"{e}"))
 
+    @action(methods=['get'], detail=False, authentication_classes=[], permission_classes=[permissions.AllowAny])
+    def setting_chinese(self,request):
+        from recipe.Sourcedata.ob_trans import multiThread
+        multiThread()
+        return (Response(status=200,data="running"))
+
 
 class RecipeViewsets(viewsets.ModelViewSet):
     """食譜相關"""

@@ -85,9 +85,10 @@ class Health(models.Model):
 class Prefer(models.Model):
     """會員飲食偏好"""
     TARGET_OPTIONS = {
-        1:"lose weight",3:"build muscle",
-        2:"keep health",4:"control blood sugar",
-        5:"control cholesterol",
+        1:"chinese",3:"japanese",
+        2:"western",4:"indian",
+        5:"thai",6:"mediterranean",
+        7:"vegetarian",8:"fastfood"
     }
     uid = models.ForeignKey(MemberP,on_delete=models.CASCADE,unique=True)
     target = models.TextField("飲食目標",null=False)
