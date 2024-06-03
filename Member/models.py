@@ -3,6 +3,8 @@ from django.contrib.auth.models import BaseUserManager,AbstractBaseUser
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import PermissionsMixin
 
+
+#  自定義使用者之相關設定
 class CustomUserManager(BaseUserManager):
     def create_user(self,account,password,uid,**extra_fields):
         """建立一般使用者"""
@@ -25,6 +27,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(account, password,uid, **extra_fields)
 
 class MemberP(AbstractBaseUser , PermissionsMixin):
+    """使用者隱私"""
     uid = models.CharField("uid", max_length=50,primary_key=True)
     account = models.CharField("帳號", max_length=50 ,null=False,unique=True)
     password = models.CharField("密碼",max_length=100,null=False)
