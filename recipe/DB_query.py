@@ -98,13 +98,13 @@ class DB_search:
 
             # 要找的標籤列表
             target_tags = [x for x in labels if x not in ['I-TAG','I-ING']]
-
-            for target_tag in target_tags:
-                # 找到特定標籤的位置
-                tag_indices = find_tag_indices(labels, target_tag)
-                # 找到特定標籤對應的單詞
-                tag_words = find_tag_words(words, labels, target_tag)
-                res["object"][labels_to_columns[target_tag]] = tag_words
+            if len(target_tags) != 0:
+                for target_tag in target_tags:
+                    # 找到特定標籤的位置
+                    tag_indices = find_tag_indices(labels, target_tag)
+                    # 找到特定標籤對應的單詞
+                    tag_words = find_tag_words(words, labels, target_tag)
+                    res["object"][labels_to_columns[target_tag]] = tag_words
             return res
 
     def __process_sentence(self,type:int,words, entities) -> list:
@@ -137,20 +137,14 @@ class DB_search:
             return data
         data_object = data['object'] ; data_attr = data['Attribute']
         # 前端的制定的參數
+        import json
+        # 讀取JSON文件
+        with open('/json_data/frontendQuery.json', 'r', encoding='utf-8') as f:
+            json_data = json.load(f)["userSearch"]
         # 食譜標籤
-        tags = [
-            # 料理風格
-            "japanese","chinese","korean","spain","italian","'german","mexico"
-        ]
-        time = [
-            # 做飯時間
-            "15-minutes-or-less","30-minutes-or-less","60-minutes-or-less",
-        ]
-        # 健康選擇
-        health = [
-        'alcohol-free','low-calorie','low-protein',
-        'high-protein','gluten-free''low-sodium','low-cholesterol'
-        ]
+        tags = json_data["tag"]
+        time = json_data["time"]
+        health = json_data["health"]
         for i in user_query:
             # 食譜標籤
             if i in tags:

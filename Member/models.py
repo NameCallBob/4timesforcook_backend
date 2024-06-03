@@ -80,20 +80,12 @@ class Health(models.Model):
     allergen = models.TextField("過敏原",null=True)
     disease = models.TextField("慢性病",null=True)
 
-
-
 class Prefer(models.Model):
     """會員飲食偏好"""
-    TARGET_OPTIONS = {
-        1:"chinese",3:"japanese",
-        2:"western",4:"indian",
-        5:"thai",6:"mediterranean",
-        7:"vegetarian",8:"fastfood"
-    }
     uid = models.ForeignKey(MemberP,on_delete=models.CASCADE,unique=True)
     target = models.TextField("飲食目標",null=False)
     restrict = models.TextField("飲食限制")
-    prefer = models.IntegerField("飲食偏好",choices=TARGET_OPTIONS)
+    prefer = models.TextField("飲食偏好")
     Nut_need = models.TextField("營養需求")
     update_time = models.DateTimeField(auto_now=True)
 

@@ -90,7 +90,7 @@ class HealthSerializer(serializers.Serializer):
             raise serializers.ValidationError(e)
 
 
-class PreferSerializer(serializers.Serializer):
+class  PreferSerializer(serializers.Serializer):
     target = serializers.ListField(allow_null=False)
     restrict = serializers.ListField()
     prefer = serializers.ListField()

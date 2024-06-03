@@ -1,0 +1,14 @@
+{
+    "register":{
+        "Nut_need": ["highProtein", "highFiber", "balancedIntake", "lowCarb", "lowFat", "calorieControl"],
+        "prefer": ["indian", "thai", "mediterranean", "vegetarian", "fastfood", "japanese", "western", "chinese"],
+        "restrict": ["organic", "lowCarb", "omnivorous", "vegetarian", "glutenFree", "lowFat", "lowSodium"],
+        "target": ["controlBloodSugar", "controlCholesterol", "increaseEnergy", "muscleGain", "loseWeight","maintainHealth"]
+    },
+    "userSearch":{
+        "intro":"tags -> 食物標籤。time -> 食譜製作時間。health -> 健康選擇。",
+        "tag":["japanese","chinese","korean","spain","italian","german","mexico"],
+        "time":["15-minutes-or-less","30-minutes-or-less","60-minutes-or-less"],
+        "health":["alcohol-free","low-calorie","low-protein","high-protein","gluten-free","low-sodium","low-cholesterol"]
+    }
+}
