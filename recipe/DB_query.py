@@ -1,6 +1,7 @@
 # django
 from django.db.models import Q
 from recipe.models import Recipe_At , Recipe_Ob
+import re
 
 class DB_search:
 
@@ -68,6 +69,9 @@ class DB_search:
 
         labels_key = labels_to_columns.keys()
         words = sentence.split()
+        # 發現標點符號問題，使用正則化將其分開
+        words = re.findall(r'\w+|[^\w\s]', sentence)
+
         clean_labels = set([x for x in labels if x != 'O']);
         clean_labels = list(clean_labels)
         # 若模型有判斷出實體
@@ -94,10 +98,21 @@ class DB_search:
             # 找到特定標籤對應的單詞
             def find_tag_words(words, tags, target_tag):
                 tag_indices = find_tag_indices(tags, target_tag)
+                if len(words) != len(tags):
+                    raise ValueError("Words and tags must be of the same length.")
+
+                tag_indices = find_tag_indices(tags, target_tag)
+
+                # 確保索引不超出 words 範圍
+                for i in tag_indices:
+                    if i >= len(words):
+                        raise IndexError(f"Index {i} out of range for words list of length {len(words)}")
+
                 return [words[i] for i in tag_indices]
 
+
             # 要找的標籤列表
-            target_tags = [x for x in labels if x not in ['I-TAG','I-ING']]
+            target_tags = [x for x in labels if x not in ['I-TAG','I-ING','O']]
             if len(target_tags) != 0:
                 for target_tag in target_tags:
                     # 找到特定標籤的位置
@@ -132,6 +147,7 @@ class DB_search:
         @data -> 先前處理的使用者參數
         @user_query -> 使用者輸入的參數
         """
+        import os
         if user_query == []:
             # 如果使用者沒有輸入任何參數，直接回傳原本的參數
             return data
@@ -139,33 +155,34 @@ class DB_search:
         # 前端的制定的參數
         import json
         # 讀取JSON文件
-        with open('/json_data/frontendQuery.json', 'r', encoding='utf-8') as f:
+        pwd = os.getcwd()
+        with open(os.path.join(pwd,'json_data','frontendQuery.json'), 'r', encoding='utf-8') as f:
             json_data = json.load(f)["userSearch"]
-        # 食譜標籤
-        tags = json_data["tag"]
-        time = json_data["time"]
-        health = json_data["health"]
-        for i in user_query:
             # 食譜標籤
-            if i in tags:
-                if i not in data_object['tags']:
-                    data_object['tags'].append(i)
-            # 食譜時間
-            elif i in time:
-                data_attr['minutes'] = int(i[0:2])
-            elif i == "time-to-make":
-                data_attr['minutes_up'] = 60
-            # 健康因素
-            elif i in health :
-                from HealthManage.expert.run import ruleResult
-                expert_data = ruleResult().main(3,i)
-                if data != None and expert_data != None:
-                    if expert_data['index'] == "object":
-                        if expert_data['content'] not in data_object[expert_data['columns']]:
-                            data_object[expert_data['columns']].append(expert_data['content'])
-            else:
-                pass
-        return data
+            tags = json_data["tag"]
+            time = json_data["time"]
+            health = json_data["health"]
+            for i in user_query:
+                # 食譜標籤
+                if i in tags:
+                    if i not in data_object['tags']:
+                        data_object['tags'].append(i)
+                # 食譜時間
+                elif i in time:
+                    data_attr['minutes'] = int(i[0:2])
+                elif i == "time-to-make":
+                    data_attr['minutes_up'] = 60
+                # 健康因素
+                elif i in health :
+                    from HealthManage.expert.run import ruleResult
+                    expert_data = ruleResult().main(3,i)
+                    if data != None and expert_data != None:
+                        if expert_data['index'] == "object":
+                            if expert_data['content'] not in data_object[expert_data['columns']]:
+                                data_object[expert_data['columns']].append(expert_data['content'])
+                else:
+                    pass
+            return data
 
     def getUserQuery(self,object):
         """依照使用者健康資訊添加篩選"""
@@ -181,7 +198,9 @@ class DB_search:
         data={
                 "object":{},
                 "Attribute":{}
-            }
+        }
+
+
         # 如果有翻譯英文，代表模型有預測，從中拿取參數
         if sentence != "":
             data = self.__type(sentence,labels)
@@ -198,15 +217,20 @@ class DB_search:
 
         # 屬性搜尋
         resultsB = Recipe_At.objects.filter(querysetB)
-
-        # 合併結果
-        final_results = resultsA.filter(rid__in=resultsB.values('rid')).order_by('?')
+        print(len(resultsB))
+        if len(resultsB) == 0 :
+            final_results = resultsA.order_by('?')
+        else:
+            # 合併結果
+            final_results = resultsA.filter(rid__in=resultsB.values('rid')).order_by('?')
 
         # 按照分數排序
-        final_results = final_results[0:3]
+        final_results = final_results[0:3] ; res_id = []
+        for i in final_results:
+            print(i.rid)
         res_id = [int(result.rid) for result in final_results]
-
         if res_id == []:
-            # 若BERT未尋找出任何東西，此為替代方案。
+            # 若BERT未尋找出任何東西，此為替代方案。\
+            print("替代方案!")
             res_id = [47366,67547,432077]
         return res_id

@@ -7,8 +7,8 @@ class MemberPrivateSerializer(serializers.Serializer):
     # MemberP Data
     account = serializers.CharField(max_length=150)
     password = serializers.CharField(max_length=128, write_only=True)
-    # Member Data
 
+    # Member Data
     def create(self, validated_data):
         try:
             if 1 == MemberP.objects.filter(account=validated_data['account']).count():
