@@ -58,7 +58,7 @@ class RecipeViewsets(viewsets.ModelViewSet):
         try:
             sentence = request.data.get("sentence",'')
             user_query = request.data.get('user_query','')
-            UserIP = request.META['REMOTE_ADDR']
+            UserIP = request.META['REMOTE_ADDAR']
         except KeyError:
             frontend_error.KeyError()
         # 先判斷使用者是否有傳任何東西
@@ -75,7 +75,7 @@ class RecipeViewsets(viewsets.ModelViewSet):
             trans_sentence = "" ; label=[]
         # 依照實體去做參數設定
         data = self.__searchDB(
-            UserIP=UserIP,
+            UserIP=self.get_client_ip(request),
             sentence=sentence,
             trans_sentence=trans_sentence,
             user_query = user_query,
@@ -127,3 +127,10 @@ class RecipeViewsets(viewsets.ModelViewSet):
         else:
             print("list_id無任何輸出")
             return 0
+    def get_client_ip(self,request):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[-1].strip()
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
