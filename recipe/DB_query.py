@@ -85,9 +85,9 @@ class DB_search:
                 "Attribute":{}
                  }
             # 多實體判別(B、I)
-            if ['B-TAG','I-TAG'] in clean_labels:
+            if 'B-TAG' in clean_labels or 'I-TAG' in clean_labels:
                 res['object']['tags'] = self.__process_sentence(1,words,labels)
-            if ['B-ING','I-ING'] in clean_labels:
+            if 'B-ING' in clean_labels or 'I-ING' in clean_labels:
                 res['object']['ingredients'] = self.__process_sentence(0,words,labels)
             # 其他單一實體判別(B)
 
@@ -111,8 +111,8 @@ class DB_search:
                 return [words[i] for i in tag_indices]
 
 
-            # 要找的標籤列表
-            target_tags = [x for x in labels if x not in ['I-TAG','I-ING','O']]
+            # 要找的標籤列表（B-TAG/B-ING 已於上方多實體判別處理，排除以免覆蓋）
+            target_tags = [x for x in labels if x not in ['B-TAG','I-TAG','B-ING','I-ING','O']]
             if len(target_tags) != 0:
                 for target_tag in target_tags:
                     # 找到特定標籤的位置
@@ -165,6 +165,7 @@ class DB_search:
             for i in user_query:
                 # 食譜標籤
                 if i in tags:
+                    data_object.setdefault('tags', [])
                     if i not in data_object['tags']:
                         data_object['tags'].append(i)
                 # 食譜時間

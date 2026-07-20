@@ -62,14 +62,9 @@ class RecipeViewsets(viewsets.ModelViewSet):
     @action(methods=['post'], detail=False, authentication_classes=[], permission_classes=[permissions.AllowAny])
     def get(self, request):
         """給予前端食譜資料"""
-        from answer import frontend_error
         # 檢查變數是否上傳正常
-        try:
-            sentence = request.data.get("sentence",'')
-            user_query = request.data.get('user_query','')
-            UserIP = request.META['REMOTE_ADDAR']
-        except KeyError:
-            frontend_error.KeyError()
+        sentence = request.data.get("sentence", '')
+        user_query = request.data.get('user_query', '')
         # 先判斷使用者是否有傳任何東西
         if sentence=='' and user_query == '':
             return Response(status=400,data="使用者沒有輸入任何參數")

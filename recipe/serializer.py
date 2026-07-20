@@ -29,7 +29,9 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def get_attributes(self, obj):
         # 在這裡取得 Recipe_At 的屬性，你可以根據實際需求進行過濾
-        recipe_at_instance = Recipe_At.objects.get(rid=obj.rid)
+        recipe_at_instance = Recipe_At.objects.filter(rid=obj.rid).first()
+        if recipe_at_instance is None:
+            return {}
         attributes_serializer = Recipe_AtSerializer(recipe_at_instance)
         return attributes_serializer.data
 
@@ -42,6 +44,8 @@ class ChineseRecipeSerializer(serializers.ModelSerializer):
 
     def get_attributes(self, obj):
         # 在這裡取得 Recipe_At 的屬性，你可以根據實際需求進行過濾
-        recipe_at_instance = Recipe_At.objects.get(rid=obj.rid)
+        recipe_at_instance = Recipe_At.objects.filter(rid=obj.rid).first()
+        if recipe_at_instance is None:
+            return {}
         attributes_serializer = Recipe_AtSerializer(recipe_at_instance)
         return attributes_serializer.data
