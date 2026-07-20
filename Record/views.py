@@ -90,6 +90,8 @@ class TestViewsets(viewsets.ViewSet):
     @action(methods=['post'], detail=False, permission_classes=[permissions.AllowAny], authentication_classes=[])
     def check(self, request):
         """確認正確"""
+        if not request.data:
+            return Response(status=400, data="未提供任何作答資料")
         for i in request.data:
             print(i)
             serializer = AnswerSerializer(data=i, many=False)
@@ -100,7 +102,7 @@ class TestViewsets(viewsets.ViewSet):
             score, wrong_qus = self.__caculate(request.data)
             return Response(status=200, data={"score": score, "wrong_question": wrong_qus})
         except Exception as e:
-                return Response(status=500, data=answer.backend_error.accident(e))
+                return answer.backend_error.accident(e)
 
     def __caculate(self, data: list) -> int:
         """計算分數"""
