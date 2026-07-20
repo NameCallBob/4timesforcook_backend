@@ -82,15 +82,16 @@ class DailyViewsets(ViewSet):
     @action(methods=['get'],permission_classes = [IsAuthenticated] , detail=False)
     def week_record(self,request):
         """使用者的計算輸入狀況"""
-        uid = request.user.uid
-        # 使用函式取得一週的日期
-        current_week_dates = self.__get_current_week_dates() ; week_dates=[]
-        # 列印出一週的日期
-        for date in current_week_dates:
-            week_dates.append(date.strftime("%Y-%m-%d"))
-        start_date = week_dates[0];end_date=week_dates[6]
+        from Member.models import Member
+        try:
+            member = Member.objects.get(uid=request.user)
+        except Member.DoesNotExist:
+            return Response(status=404, data="?")
+        # 使用函式取得一週的日期物件
+        week_dates = self.__get_current_week_dates()
+        start_date = week_dates[0]; end_date = week_dates[6]
 
-        ob = InputRecord.objects.filter(time__range=(start_date,end_date),uid = uid)
+        ob = InputRecord.objects.filter(date__range=(start_date,end_date), uid=member)
         serializer = InputRecordSerializer(ob,many=True)
         return Response(data=serializer.data,status=200)
 
@@ -125,7 +126,7 @@ class DailyViewsets(ViewSet):
                 exercise += (int(i['sport_time']) * tmp[i['strong']])
 
         ob = HealthTarget.objects.get(uid=uid)
-        week_data = self.__get_current_week_dates(uid)
+        week_data = self.__get_week_status(uid)
         return {
             "week":week_data,
             "record":{
@@ -141,17 +142,18 @@ class DailyViewsets(ViewSet):
             }
             }
 
-    def __get_current_week_dates(self,uid_ob):
-        """確認使用者的填寫紀錄"""
+    def __get_current_week_dates(self):
+        """取得本週（週一至週日）的 7 個日期物件"""
         from datetime import datetime,timedelta
-        today = datetime.today()
+        today = datetime.today().date()
         day_of_week = today.weekday()
-        days_to_subtract = day_of_week
-        start_of_week = today - timedelta(days=days_to_subtract)
-        week_dates = []
+        start_of_week = today - timedelta(days=day_of_week)
+        return [start_of_week + timedelta(days=i) for i in range(7)]
+
+    def __get_week_status(self,uid_ob):
+        """確認使用者本週每日的填寫達標狀況"""
+        week_dates = self.__get_current_week_dates()
         res = {}
-        for i in range(7):
-            week_dates.append(start_of_week + timedelta(days=i))
         data = InputRecord.objects.filter(date__range=(week_dates[0],week_dates[6]),uid=uid_ob)
         target = HealthTarget.objects.get(uid=uid_ob)
         if data.count() == 0 :

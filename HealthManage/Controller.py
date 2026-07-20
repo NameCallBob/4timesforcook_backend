@@ -7,13 +7,13 @@ class Manage:
         Member_ob => uid
         """
         try:
-            User_health = Health.objects.getr(uid=Member_ob)
+            User_health = Health.objects.get(uid=Member_ob)
             User_prefer = Prefer.objects.get(uid=Member_ob)
             User_weight = int(User_health.weight)
             User_height = int(User_health.height)
             bmi = self.__bmi(weight=User_weight,height=User_height)
             from HealthManage.expert.run import ruleResult
-            target = ruleResult.main(
+            target = ruleResult().main(
                 type_expert=1,
                 data=bmi
             )
@@ -31,8 +31,6 @@ class Manage:
             return 1
         except Health.DoesNotExist:
             return 0
-        except Exception as e :
-            print(e)
 
     def __bmi(self,weight,height):
         """輸出BMI結果"""
