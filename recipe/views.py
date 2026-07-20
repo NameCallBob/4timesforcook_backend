@@ -13,10 +13,18 @@ from Record.views import record_
 
 
 class DefaultRunViewsets(viewsets.ModelViewSet):
-    """初始化使用"""
-    @action(methods=['get'], detail=False, authentication_classes=[], permission_classes=[permissions.AllowAny])
+    """初始化使用（破壞性資料庫種子端點）。
+
+    這些端點會執行大量匯入並啟動背景執行緒，屬於破壞性操作，
+    理想上應改寫為 Django management command（例如 python manage.py seed_recipes），
+    而非透過 HTTP 端點觸發。目前已限制為僅管理員（IsAdminUser）可存取。
+    """
+    queryset = Recipe_Ob.objects.none()
+    serializer_class = RecipeSerializer
+
+    @action(methods=['get'], detail=False, permission_classes=[permissions.IsAdminUser])
     def setting(self, request):
-        """進行初步資料庫設定"""
+        """進行初步資料庫設定（僅限管理員）。"""
         from recipe.Sourcedata.data_use import Trans_db
         data_db = Trans_db()
         # run
@@ -29,8 +37,9 @@ class DefaultRunViewsets(viewsets.ModelViewSet):
             print(f"其問題如：{e}")
             return (Response(status=500, data=f"{e}"))
 
-    @action(methods=['get'], detail=False, authentication_classes=[], permission_classes=[permissions.AllowAny])
+    @action(methods=['get'], detail=False, permission_classes=[permissions.IsAdminUser])
     def setting_chinese(self,request):
+        """匯入中文食譜資料（僅限管理員）。"""
         from recipe.Sourcedata.ob_trans import multiThread
         multiThread()
         return (Response(status=200,data="running"))
