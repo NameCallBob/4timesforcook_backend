@@ -68,24 +68,15 @@ class MemberViewset(viewsets.GenericViewSet):
     @action(methods=['post'], detail=False)
     def change(self, request):
         """修改會員資料"""
-        account = request.user.account
         try:
-            ob = MemberP.objects.get(account = account)
-        except MemberP.DoesNotExist:
+            member = Member.objects.get(uid=request.user)
+        except Member.DoesNotExist:
             return Response(status=404,data="?")
 
-        serializer = MemberSerializer(request.data, many=False)
-        if serializer.is_valid():
-            ok = serializer.update(
-                instance=ob ,
-                validated_data=request.data
-            )
-            if ok :
-                return Response(status=200,data="ok")
-            else:
-                return Response(status=400,data="輸入資料錯誤")
-        else:
-            return answer.frontend_error.FormatError(serializer.errors)
+        serializer = MemberSerializer(instance=member, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(status=200,data="ok")
 
 
 
@@ -131,19 +122,19 @@ class Member_use_Viewset(viewsets.ViewSet):
         # do!
         try:
             with transaction.atomic():
-                deal_res = Private_serializer.create(request.data['Private'])
+                deal_res = Private_serializer.create(Private_serializer.validated_data)
                 status = deal_res[0]
                 message = deal_res[1]
-                uid = MemberP.objects.get(uid=deal_res[2])
 
                 if status:
-                    if not Member_serializer.create(uid=uid, validated_data=request.data['Member']):
+                    uid = MemberP.objects.get(uid=deal_res[2])
+                    if not Member_serializer.create(uid=uid, validated_data=Member_serializer.validated_data):
                         return Response(data=f"會員資料建立失敗，錯誤訊息:{Member_serializer.errors}，請依照錯誤訊息進行修正", status=400)
                     else:
-                        if not Health_serializer.create(uid=uid, validated_data=request.data['Health']):
+                        if not Health_serializer.create(uid=uid, validated_data=Health_serializer.validated_data):
                             return Response(data=f"健康資料建立失敗，錯誤訊息:{Health_serializer.errors}，請依照錯誤訊息進行修正", status=400)
                         else:
-                            if not Prefer_serializer.create(uid=uid, validated_data=request.data['Prefer']):
+                            if not Prefer_serializer.create(uid=uid, validated_data=Prefer_serializer.validated_data):
                                 return Response(data=f"偏好資料建立失敗，錯誤訊息:{Health_serializer.errors}，請依照錯誤訊息進行修正", status=400)
                             else:
                                 return Response(status=200, data="OK")
@@ -153,10 +144,7 @@ class Member_use_Viewset(viewsets.ViewSet):
                     else:
                         return Response(status=400, data=message)
         except Exception as e:
-            transaction.rollback()
             return Response(status=500, data=f"出現意外問題，請洽系統管理員，ErrorMessage:{e}，或前端失誤")
-        else:
-            transaction.commit()
 
     @action(methods=['post'], detail=False, authentication_classes=[],
             permission_classes=[permissions.AllowAny],
