@@ -15,8 +15,13 @@ import answer
 
 
 
-class MemberViewset(viewsets.ModelViewSet):
-    """會員viewset"""
+class MemberViewset(viewsets.GenericViewSet):
+    """會員 viewset。
+
+    僅暴露 scoped 的 'info' (GET) 與 'change' (POST) 兩個自訂動作，
+    皆以 request.user 為範圍。刻意不使用 ModelViewSet，以避免暴露
+    針對全體會員的 list/retrieve/update/destroy CRUD（IDOR）。
+    """
     queryset = Member.objects.all()
     serializer_class = MemberSerializer
     permission_classes = [permissions.IsAuthenticated]
