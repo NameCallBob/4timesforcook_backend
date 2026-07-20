@@ -1,0 +1,9 @@
+# Web runtime dependencies for the 4time backend (Django + DRF).
+# ML / recipe-seeding deps live in requirements-ml.txt.
+Django>=5.0,<5.2
+djangorestframework
+djangorestframework-simplejwt
+django-cors-headers
+python-dotenv
+drf-spectacular
+mysqlclient

@@ -1,17 +1,23 @@
 ## 儲存不該被上傳的檔案
 
-
 ## 食譜資料！
 *.csv
-## 環境變數
-*.env
 
-## /* 不儲存資料庫更改的紀錄 */
+## 環境變數 (keep .env ignored, but allow .env.example)
+.env
 
-HealthManage/migrations/
-Record/migrations/
-recipe/migrations/
-Member/migrations/
+## Python
+__pycache__/
+*.py[cod]
+
+## macOS
+.DS_Store
+
+## Virtualenv
+.venv/
+
+## Database
+db.sqlite3
 
 # 模型(檔案太大)
 /recipe/BertModel/model.pth

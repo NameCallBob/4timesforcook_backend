@@ -1,0 +1,12 @@
+# ML / heavy dependencies.
+# These are ONLY needed for the recipe seeding / BERT features
+# (offline data preparation and model inference). The web app runs
+# without them, so keep these imports lazy (inside functions).
+torch
+transformers
+nltk
+deep-translator
+pandas
+numpy
+openpyxl
+tqdm
