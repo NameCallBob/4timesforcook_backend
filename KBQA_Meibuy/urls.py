@@ -2,6 +2,8 @@
 from django.contrib import admin
 from django.urls import path
 from rest_framework.routers import SimpleRouter
+from rest_framework_simplejwt.views import TokenRefreshView
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from recipe.views import DefaultRunViewsets, RecipeViewsets
 from Member.views import *
 from Record.views import TestViewsets
@@ -34,6 +36,11 @@ router.register(
 )
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # JWT：以 refresh token 換發新的 3 小時 access token
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # OpenAPI schema 與 Swagger 文件
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 ]
 
 urlpatterns += router.urls
