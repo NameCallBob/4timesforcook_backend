@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import render
 from rest_framework import viewsets, permissions
 
@@ -10,6 +12,8 @@ from recipe.models import Recipe_Ob,Chinese_Ob
 from recipe.serializer import RecipeSerializer , ChineseRecipeSerializer
 # Record
 from Record.views import record_
+
+logger = logging.getLogger(__name__)
 
 
 class DefaultRunViewsets(viewsets.ModelViewSet):
@@ -30,11 +34,10 @@ class DefaultRunViewsets(viewsets.ModelViewSet):
         # run
         try:
             data_db.trans()
-            print("初始化成功！")
+            logger.info("初始化成功！")
             return (Response(status=200, data="資料初始化成功！"))
         except Exception as e:
-            print("初始化出現問題")
-            print(f"其問題如：{e}")
+            logger.exception("初始化出現問題：%s", e)
             return (Response(status=500, data=f"{e}"))
 
     @action(methods=['get'], detail=False, permission_classes=[permissions.IsAdminUser])
@@ -129,7 +132,7 @@ class RecipeViewsets(viewsets.ModelViewSet):
             res = ChineseRecipeSerializer(ob, many=True)
             return res.data
         else:
-            print("list_id無任何輸出")
+            logger.debug("list_id無任何輸出")
             return 0
     def get_client_ip(self,request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')

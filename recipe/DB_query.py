@@ -1,7 +1,11 @@
 # django
 from django.db.models import Q
 from recipe.models import Recipe_At , Recipe_Ob
+import logging
 import re
+
+logger = logging.getLogger(__name__)
+
 
 class DB_search:
 
@@ -206,11 +210,11 @@ class DB_search:
         if sentence != "":
             data = self.__type(sentence,labels)
             if data == 0:
-                print("無實體")
+                logger.debug("無實體")
                 return [47366,218967,23850]
 
         data = self.__process_UserQuery(data,user_query)
-        print(data)
+        logger.debug("query data: %s", data)
         querysetA , querysetB = self.__query_set(data)
 
         # 實體搜尋
@@ -218,7 +222,7 @@ class DB_search:
 
         # 屬性搜尋
         resultsB = Recipe_At.objects.filter(querysetB)
-        print(len(resultsB))
+        logger.debug("attribute results count: %s", len(resultsB))
         if len(resultsB) == 0 :
             final_results = resultsA.order_by('?')
         else:
@@ -228,10 +232,10 @@ class DB_search:
         # 按照分數排序
         final_results = final_results[0:3] ; res_id = []
         for i in final_results:
-            print(i.rid)
+            logger.debug("matched rid: %s", i.rid)
         res_id = [int(result.rid) for result in final_results]
         if res_id == []:
             # 若BERT未尋找出任何東西，此為替代方案。\
-            print("替代方案!")
+            logger.debug("使用替代方案！")
             res_id = [47366,67547,432077]
         return res_id

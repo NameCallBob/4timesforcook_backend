@@ -1,4 +1,5 @@
 #  --coding:utf8--**
+import ast
 import pandas as pd
 
 import os
@@ -101,7 +102,7 @@ class DataBase:
         word = [] ; BIO_tags = []
         # 將資料儲存於陣列
         for index, row in data.iterrows():
-            for i in eval(row[key]):
+            for i in ast.literal_eval(row[key]):
                 word.append(i)
         # 找出唯一值
         word = set(word) ; words = list(word)
@@ -145,8 +146,8 @@ class DataBase:
 
     def getSingleWord(self):
         d1,d2 = self.resource()
-        word = [eval(i) for i in d1['ingredients'].tolist() ] ; all_word = [] ; word_BIO = []
-        tag =  [eval(i) for i in  d1['tags'].tolist() ] ; all_tag = [] ; tag_BIO = []
+        word = [ast.literal_eval(i) for i in d1['ingredients'].tolist() ] ; all_word = [] ; word_BIO = []
+        tag =  [ast.literal_eval(i) for i in  d1['tags'].tolist() ] ; all_tag = [] ; tag_BIO = []
         for i in word:
             for j in i:
                 for k in j.split(" "):
@@ -200,7 +201,7 @@ class Trans_db(DataBase):
     def __toAttribute(self, data):
         from recipe.models import Recipe_At
         for index, row in data.iterrows():
-            nutrition=eval(row['nutrition'])
+            nutrition=ast.literal_eval(row['nutrition'])
             Recipe_At.objects.create(
                 rid=row['id'],
                 minutes=row['minutes'],
@@ -266,7 +267,7 @@ class Trans_db(DataBase):
         else:
             # 字多採分割的方式翻譯
                 res = []
-                for i in eval(text):
+                for i in ast.literal_eval(text):
                     # https://stackoverflow.com/questions/70673172/how-to-solve-text-must-be-a-valid-text-with-maximum-5000-character-otherwise-it
                     x = nltk.tokenize.sent_tokenize(i)
                     for sentence in x :
