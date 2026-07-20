@@ -108,27 +108,16 @@ class  PreferSerializer(serializers.Serializer):
             raise serializers.ValidationError(e)
 
 
-class ForgotPasswordSerializer(serializers.Serializer):
-    password = serializers.CharField(max_length=100)
-    email = serializers.CharField(max_length=100)
-    birth = serializers.DateField()
-    def change(self,data):
-        ob = Member.objects.filter(email = data['email'],birth=data['birth'])
-        if ob.count() == 1:
-            try:
-                from django.contrib.auth.hashers import make_password
-                new_password = make_password(data['password'])
-                uid = ob[0].uid.uid
-                ob = MemberP.objects.get(uid=uid)
-                ob.password = new_password
-                ob.save()
-                return True
+class RequestPasswordResetSerializer(serializers.Serializer):
+    """請求密碼重設：僅需 email。回應不透露該 email 是否存在（避免帳號列舉）。"""
+    email = serializers.EmailField(max_length=100)
 
-            except Exception as e :
-                raise serializers.ValidationError(e)
-                return False
-        else:
-            return False
+
+class ResetPasswordSerializer(serializers.Serializer):
+    """透過 uid + token 完成密碼重設。"""
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    password = serializers.CharField(max_length=128, write_only=True)
 
 from Member.models import InputRecord
 class InputRecordSerializer(serializers.ModelSerializer):

@@ -1,17 +1,42 @@
 
+import logging
+
 from rest_framework.decorators import action ,permission_classes ,authentication_classes
 from rest_framework import viewsets, permissions
 from rest_framework.response import Response
+from rest_framework.throttling import SimpleRateThrottle
 # check
+from django.conf import settings
 from django.contrib.auth import authenticate
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.tokens import default_token_generator
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework_simplejwt.tokens import RefreshToken
 # inner
 from Record.views import record_
 from Member.models import Member, MemberP
-from Member.serializer import MemberPrivateSerializer, MemberSerializer, HealthSerializer, PreferSerializer , ForgotPasswordSerializer
+from Member.serializer import (
+    MemberPrivateSerializer, MemberSerializer, HealthSerializer, PreferSerializer,
+    RequestPasswordResetSerializer, ResetPasswordSerializer,
+)
 # model
 from django.db import transaction
 import answer
+
+logger = logging.getLogger(__name__)
+
+
+class PasswordResetThrottle(SimpleRateThrottle):
+    """套用 settings 中 'password_reset' 節流速率（預設 5/hour），以來源 IP 為識別。"""
+    scope = 'password_reset'
+
+    def get_cache_key(self, request, view):
+        return self.cache_format % {
+            'scope': self.scope,
+            'ident': self.get_ident(request),
+        }
 
 
 
@@ -133,14 +158,73 @@ class Member_use_Viewset(viewsets.ViewSet):
         else:
             transaction.commit()
 
-    @action(methods=['post'], detail=False)
-    def forgot_password(self, request):
-        """忘記密碼"""
-        forgot_serializer = ForgotPasswordSerializer(data=request.data)
-        if forgot_serializer.is_valid():
-            if forgot_serializer.change(data=request.data):
-                return Response(status=200,data="ok")
-            else:
-                return Response(status=404,data={"code":1001})
-        else:
-            return Response(data=f"資料格式錯誤，錯誤訊息:{forgot_serializer.errors}，請依照錯誤訊息進行修正", status=400)
+    @action(methods=['post'], detail=False, authentication_classes=[],
+            permission_classes=[permissions.AllowAny],
+            throttle_classes=[PasswordResetThrottle])
+    def request_password_reset(self, request):
+        """請求密碼重設連結。
+
+        無論該 email 是否存在，皆回傳相同的通用訊息，避免帳號列舉。
+        若帳號存在，會產生 default_token_generator 的 token 與 base64 編碼的 uid，
+        並記錄於 log。此為 portfolio/demo 用途（無郵件伺服器）：僅在 DEBUG 時
+        將 uid/token 一併回傳以便測試。
+        TODO: 正式環境改用 send_mail() 寄送含 uid/token 的重設連結，
+              且切勿於 API 回應中回傳 token。
+        """
+        serializer = RequestPasswordResetSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=400, data=f"資料格式錯誤，錯誤訊息:{serializer.errors}，請依照錯誤訊息進行修正")
+
+        email = serializer.validated_data['email']
+        generic = {"message": "若該電子郵件已註冊，系統將寄送密碼重設連結。"}
+
+        member = Member.objects.filter(email=email).select_related('uid').first()
+        if member is not None:
+            user = member.uid
+            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            logger.info(
+                "Password reset requested account=%s uid=%s token=%s",
+                user.account, uidb64, token,
+            )
+            if settings.DEBUG:
+                data = dict(generic)
+                data.update({"uid": uidb64, "token": token})
+                return Response(status=200, data=data)
+
+        return Response(status=200, data=generic)
+
+    @action(methods=['post'], detail=False, authentication_classes=[],
+            permission_classes=[permissions.AllowAny],
+            throttle_classes=[PasswordResetThrottle])
+    def reset_password(self, request):
+        """透過 uid + token 重設密碼。
+
+        需提供 uid、token 與新密碼；以 default_token_generator 驗證 token，
+        並強制套用 Django 密碼驗證器後才更新密碼。
+        """
+        serializer = ResetPasswordSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=400, data=f"資料格式錯誤，錯誤訊息:{serializer.errors}，請依照錯誤訊息進行修正")
+
+        uidb64 = serializer.validated_data['uid']
+        token = serializer.validated_data['token']
+        new_password = serializer.validated_data['password']
+
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = MemberP.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, MemberP.DoesNotExist):
+            return Response(status=400, data={"code": 1001, "message": "重設連結無效或已過期。"})
+
+        if not default_token_generator.check_token(user, token):
+            return Response(status=400, data={"code": 1001, "message": "重設連結無效或已過期。"})
+
+        try:
+            validate_password(new_password, user)
+        except DjangoValidationError as e:
+            return Response(status=400, data={"code": 1002, "message": list(e.messages)})
+
+        user.set_password(new_password)
+        user.save()
+        return Response(status=200, data={"message": "密碼已成功重設。"})
