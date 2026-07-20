@@ -13,6 +13,13 @@ class MemberPrivateSerializer(serializers.Serializer):
         try:
             if 1 == MemberP.objects.filter(account=validated_data['account']).count():
                 return [False, "已註冊過", None]
+            # 註冊前強制套用 Django 密碼驗證器
+            from django.contrib.auth.password_validation import validate_password
+            from django.core.exceptions import ValidationError as DjangoValidationError
+            try:
+                validate_password(validated_data['password'])
+            except DjangoValidationError as e:
+                return [False, "密碼不符合安全性規則：{0}".format("；".join(e.messages)), None]
             uid = "U{0:06d}".format(MemberP.objects.all().count()+2)
             from django.contrib.auth.hashers import make_password
             ob = MemberP.objects.create(
