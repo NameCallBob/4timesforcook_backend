@@ -14,10 +14,22 @@ class DailyViewsets(ViewSet):
     def Personal(self,request):
         """得取目前使用者的紀錄"""
         from Member.models import Member
-        uid = Member.objects.get(uid=request.user.uid)
+        try:
+            uid = Member.objects.get(uid=request.user.uid)
+        except Member.DoesNotExist:
+            return Response(status=404, data="找不到會員資料")
+        if not self.__ensure_target(request.user, uid):
+            return Response(status=404, data="尚未建立健康目標，請先補齊身高體重資料")
         serializer = UserDailyInfoSerializer([uid,1])
         res = self.__sumUserInputRecord(uid,serializer.data)
         return Response(data=res,status=200)
+
+    def __ensure_target(self, member_p, member):
+        """確保使用者有健康目標；舊帳號沒有的話依身高體重補建一次。"""
+        if HealthTarget.objects.filter(uid=member).exists():
+            return True
+        from HealthManage.Controller import Manage
+        return bool(Manage().analyze(member_p))
 
     @action(methods=['get'],permission_classes=[IsAuthenticated],detail=False)
     def recipe(self,request):

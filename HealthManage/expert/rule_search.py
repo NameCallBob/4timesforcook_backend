@@ -1,91 +1,27 @@
-from experta import *
+"""搜尋參數規則：把前端的健康標籤轉成食譜查詢條件。
 
-class SearchQuery(Fact):
-    """使用者給予的搜尋參數"""
-    pass
+原以 experta 撰寫，因該套件已無法在 Python 3.10+ 執行而改為純 Python 對照表。
+未知或空白的查詢回傳 None，由呼叫端決定如何處理。
+"""
 
-class SearchParamsRule(KnowledgeEngine):
-    """
-    依照參數給予相對應的結果
-    """
-    def __makeRespose(self,target):
-        """console其找到的規則及結果，查看規則是否有正常運作"""
-        print(f"找到結果：{target}")
-
-    @Rule(
-        SearchQuery(query="alcohol-free")
-    )
-    def alcohol_free(self):
-         self.res = {
-            "index":"object",
-            "columns":"tags",
-            "content":"non-alcoholic"
-        }
-
-    @Rule(
-        SearchQuery(query = "low-calories")
-    )
-    def low_calories(self):
-         self.res = {
-            "index":"object",
-            "columns":"tags",
-            "content":"low-calories"
-        }
-
-    @Rule(
-        SearchQuery(query = "low-protein")
-    )
-    def low_protein(self):
-        self.res = {
-            "index":"object",
-            "columns":"tags",
-            "content":"low-protein"
-        }
-
-    @Rule(
-        SearchQuery(query = "low-sodium")
-    )
-    def low_sodium(self):
-        self.res = {
-            "index":"object",
-            "columns":"tags",
-            "content":"low-sodium"
-        }
-
-    @Rule(
-        SearchQuery(query = "low-cholesterol")
-    )
-    def low_cholesterol(self):
-        self.res = {
-            "index":"object",
-            "columns":"tags",
-            "content":"low-cholesterol"
-        }
-
-    @Rule(
-        SearchQuery(query = "high-protein")
-    )
-    def high_protein(self):
-        """高蛋白"""
-        self.res = {
-            "index":"object",
-            "columns":"tags",
-            "content":"high-protein"
-        }
+# 前端標籤 -> 資料庫 tags 欄位要比對的內容
+TAG_QUERIES = {
+    "alcohol-free": "non-alcoholic",
+    "low-calories": "low-calories",
+    "low-calorie": "low-calories",
+    "low-protein": "low-protein",
+    "high-protein": "high-protein",
+    "low-sodium": "low-sodium",
+    "low-cholesterol": "low-cholesterol",
+    "gluten-free": "gluten-free",
+}
 
 
-    @Rule(
-        SearchQuery(query = "gluten-free")
-    )
-    def gluten_free(self):
-         self.res = {
-            "index":"object",
-            "columns":"tags",
-            "content":"gluten-free"
-        }
-
-    @Rule()
-    def else_rule(self):
-        # 在所有其他規則都不符合時執行的動作
-        self.res=None
-        self.__makeRespose("無")
+def params_for_query(query):
+    """回傳查詢條件 dict，查無對應時回傳 None。"""
+    if not isinstance(query, str):
+        return None
+    content = TAG_QUERIES.get(query.strip().lower())
+    if content is None:
+        return None
+    return {"index": "object", "columns": "tags", "content": content}
