@@ -85,6 +85,20 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
+# OpenAPI / Swagger 文件設定（/api/docs/）
+SPECTACULAR_SETTINGS = {
+    'TITLE': '四時煮食時 4timeforcook API',
+    'DESCRIPTION': (
+        '個人化食譜推薦與每日健康管理系統的後端 API。\n\n'
+        '主要模組：Center（註冊/登入/密碼重設）、Member（會員資料）、'
+        'Recipe（食譜查詢與推薦）、HManage（每日水分/卡路里/運動紀錄）、'
+        'Test（健康知識測驗）。\n\n'
+        '除公開端點外皆需在 Authorize 填入 `Bearer <access token>`。'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
+
 # JWT設計
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=3),  # 設定JWT Token的有效期
