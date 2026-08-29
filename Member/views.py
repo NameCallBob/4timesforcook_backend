@@ -55,15 +55,13 @@ class MemberViewset(viewsets.GenericViewSet):
     def info(self, request):
         """輸出會員個人資料"""
         try:
-            account = request.user.account
-            uid = MemberP.objects.get(account = account)
-            data = Member.objects.filter(uid = uid)
-            serializer = MemberSerializer(data, many=False)
-            return Response(status=200, data=serializer.data)
+            # filter() 會回傳 QuerySet，交給 many=False 的序列化器會直接噴 500，
+            # 這裡改用 get() 取單一物件。
+            member = Member.objects.get(uid=request.user)
         except Member.DoesNotExist:
-            return Response(status=404, data="?")
-        except Exception as e:
-            return answer.backend_error.accident(e)
+            return Response(status=404, data="找不到會員資料")
+        serializer = MemberSerializer(member, many=False)
+        return Response(status=200, data=serializer.data)
 
     @action(methods=['post'], detail=False)
     def change(self, request):
@@ -137,6 +135,10 @@ class Member_use_Viewset(viewsets.ViewSet):
                             if not Prefer_serializer.create(uid=uid, validated_data=Prefer_serializer.validated_data):
                                 return Response(data=f"偏好資料建立失敗，錯誤訊息:{Health_serializer.errors}，請依照錯誤訊息進行修正", status=400)
                             else:
+                                # 依身高體重推導每日飲食/運動目標，
+                                # 讓 /HManage/Personal/ 一註冊完就能直接使用。
+                                from HealthManage.Controller import Manage
+                                Manage().analyze(uid)
                                 return Response(status=200, data="OK")
                 else:
                     if message == "已註冊過":

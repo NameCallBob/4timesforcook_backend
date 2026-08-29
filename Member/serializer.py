@@ -41,8 +41,18 @@ class MemberSerializer(serializers.ModelSerializer):
         fields = ['name', 'birth', 'email', 'gender','job']
 
     def validate(self, data):
-        existing_member = Member.objects.filter(email=data['email']).first()
-        if existing_member:
+        """檢查 email 是否被別人用過。
+
+        partial update 時 data 可能沒有 email（原本直接用 data['email'] 會 KeyError
+        變成 500），而更新自己的資料時也不該把自己的 email 判為重複。
+        """
+        email = data.get('email')
+        if not email:
+            return data
+        duplicates = Member.objects.filter(email=email)
+        if self.instance is not None:
+            duplicates = duplicates.exclude(pk=self.instance.pk)
+        if duplicates.exists():
             raise serializers.ValidationError("該電子郵件地址已被註冊。")
         return data
 
