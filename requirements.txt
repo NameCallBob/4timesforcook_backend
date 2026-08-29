@@ -1,9 +1,13 @@
 # Web runtime dependencies for the 4time backend (Django + DRF).
-# ML / recipe-seeding deps live in requirements-ml.txt.
+# Works out of the box on SQLite — no system libraries required.
+#
+# Optional extras:
+#   requirements-dev.txt   test tooling (pytest)
+#   requirements-mysql.txt MySQL driver (only if DB_ENGINE=mysql)
+#   requirements-ml.txt    BERT / recipe-seeding deps (offline data prep)
 Django>=5.0,<5.2
 djangorestframework
 djangorestframework-simplejwt
 django-cors-headers
 python-dotenv
 drf-spectacular
-mysqlclient

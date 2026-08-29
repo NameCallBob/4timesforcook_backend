@@ -18,6 +18,12 @@ __pycache__/
 
 ## Database
 db.sqlite3
+*.sqlite3
+
+## Test / tooling caches
+.pytest_cache/
+.coverage
+htmlcov/
 
 # 模型(檔案太大)
 /recipe/BertModel/model.pth
