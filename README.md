@@ -6,7 +6,7 @@
 [![Django](https://img.shields.io/badge/Django-5.1-092E20)](https://www.djangoproject.com/)
 [![DRF](https://img.shields.io/badge/DRF-3.17-a30000)](https://www.django-rest-framework.org/)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-63%20passed-brightgreen)](#測試)
+[![Tests](https://img.shields.io/badge/tests-82%20passed-brightgreen)](#測試)
 
 ---
 
@@ -174,7 +174,7 @@ pytest
 ```
 
 測試會自動使用 SQLite（見 `pytest_env_setup.py`），不會碰到 MySQL，
-也不會載入 torch / transformers。目前 **63 個測試全數通過**，涵蓋：
+也不會載入 torch / transformers。目前 **82 個測試全數通過**，涵蓋：
 
 - `Member/tests.py` — 授權與 IDOR 防護、密碼雜湊與強度驗證、登入、
   不洩漏帳號存在與否的密碼重設流程、註冊後自動建立每日目標。
@@ -184,6 +184,8 @@ pytest
   運動強度加權、達成率統計、時區邊界（凌晨紀錄仍算今天）。
 - `HealthManage/test_rules.py` — BMI 分級邊界、慢性病飲食規則、
   搜尋參數轉換、由身高體重推導每日目標。
+- `recipe/tests.py` — 前端條件轉查詢參數（標籤／時間／健康因素）、
+  查詢參數組成 ORM 的 Q 物件與上下界條件。
 
 ## 環境變數
 

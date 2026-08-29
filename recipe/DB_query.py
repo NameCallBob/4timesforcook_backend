@@ -33,7 +33,9 @@ class DB_search:
             if d_at.get('minutes'):
                 queryB &= Q(minutes__lte=d_at['minutes'])
             if d_at.get("minutes_up"):
-                queryB &= Q(minutes__gt=d_at['minutes'])
+                # 原本誤讀 d_at['minutes']，只選「time-to-make」而沒選時間上限時
+                # 會 KeyError 直接 500
+                queryB &= Q(minutes__gt=d_at['minutes_up'])
             # if d_at.get("nutrition"):
             #     queryB &= Q(nutrition__lte=d_at['nutrition'])
             # 營養數值
@@ -151,16 +153,17 @@ class DB_search:
         @data -> 先前處理的使用者參數
         @user_query -> 使用者輸入的參數
         """
-        import os
-        if user_query == []:
+        if not user_query:
             # 如果使用者沒有輸入任何參數，直接回傳原本的參數
             return data
         data_object = data['object'] ; data_attr = data['Attribute']
-        # 前端的制定的參數
+        # 前端制定的參數
         import json
-        # 讀取JSON文件
-        pwd = os.getcwd()
-        with open(os.path.join(pwd,'json_data','frontendQuery.json'), 'r', encoding='utf-8') as f:
+
+        from django.conf import settings
+        # 以 BASE_DIR 定位，避免用 os.getcwd()：從其他目錄啟動 server 時會找不到檔案
+        query_file = settings.BASE_DIR / 'json_data' / 'frontendQuery.json'
+        with open(query_file, 'r', encoding='utf-8') as f:
             json_data = json.load(f)["userSearch"]
             # 食譜標籤
             tags = json_data["tag"]
@@ -181,10 +184,13 @@ class DB_search:
                 elif i in health :
                     from HealthManage.expert.run import ruleResult
                     expert_data = ruleResult().main(3,i)
-                    if data != None and expert_data != None:
-                        if expert_data['index'] == "object":
-                            if expert_data['content'] not in data_object[expert_data['columns']]:
-                                data_object[expert_data['columns']].append(expert_data['content'])
+                    if expert_data is not None and expert_data['index'] == "object":
+                        column = expert_data['columns']
+                        # 該欄位可能還沒被模型建立，先補上空 list 再附加，
+                        # 否則直接索引會 KeyError 變成 500。
+                        data_object.setdefault(column, [])
+                        if expert_data['content'] not in data_object[column]:
+                            data_object[column].append(expert_data['content'])
                 else:
                     pass
             return data
