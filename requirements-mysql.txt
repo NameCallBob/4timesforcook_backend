@@ -1,0 +1,5 @@
+# MySQL driver — only needed when DB_ENGINE=mysql.
+# Requires MySQL client headers on the machine (e.g. `brew install mysql-client`
+# on macOS, `apt install libmysqlclient-dev` on Debian/Ubuntu), which is why it
+# is kept out of the default requirements.txt.
+mysqlclient

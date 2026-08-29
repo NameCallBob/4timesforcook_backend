@@ -1,0 +1,4 @@
+# Test tooling. Install alongside requirements.txt to run `pytest`.
+-r requirements.txt
+pytest
+pytest-django

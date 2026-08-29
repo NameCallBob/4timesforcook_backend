@@ -106,11 +106,16 @@ class UserDailyInfoSerializer(serializers.Serializer):
 
     def __status(self,filter_ob,status,uid):
         """依照狀況給予參數"""
-        from datetime import datetime , timedelta
+        from datetime import datetime, time, timedelta
+
+        from django.utils import timezone
         if status == 1:
-            # now
-            now_date = datetime.now().date()
-            return filter_ob.filter(time__range=(now_date, now_date+timedelta(days=1)),uid = uid)
+            # now：以專案時區（Asia/Taipei）的「今天」為區間，
+            # 用 aware datetime 避免 USE_TZ=True 下被當成 UTC 而偏移 8 小時。
+            today = timezone.localdate()
+            start = timezone.make_aware(datetime.combine(today, time.min))
+            end = start + timedelta(days=1)
+            return filter_ob.filter(time__gte=start, time__lt=end, uid=uid)
 
         elif status == 2:
             # week

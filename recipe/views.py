@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import render
 from rest_framework import viewsets, permissions
 
@@ -11,26 +13,36 @@ from recipe.serializer import RecipeSerializer , ChineseRecipeSerializer
 # Record
 from Record.views import record_
 
+logger = logging.getLogger(__name__)
+
 
 class DefaultRunViewsets(viewsets.ModelViewSet):
-    """初始化使用"""
-    @action(methods=['get'], detail=False, authentication_classes=[], permission_classes=[permissions.AllowAny])
+    """初始化使用（破壞性資料庫種子端點）。
+
+    這些端點會執行大量匯入並啟動背景執行緒，屬於破壞性操作，
+    理想上應改寫為 Django management command（例如 python manage.py seed_recipes），
+    而非透過 HTTP 端點觸發。目前已限制為僅管理員（IsAdminUser）可存取。
+    """
+    queryset = Recipe_Ob.objects.none()
+    serializer_class = RecipeSerializer
+
+    @action(methods=['get'], detail=False, permission_classes=[permissions.IsAdminUser])
     def setting(self, request):
-        """進行初步資料庫設定"""
+        """進行初步資料庫設定（僅限管理員）。"""
         from recipe.Sourcedata.data_use import Trans_db
         data_db = Trans_db()
         # run
         try:
             data_db.trans()
-            print("初始化成功！")
+            logger.info("初始化成功！")
             return (Response(status=200, data="資料初始化成功！"))
         except Exception as e:
-            print("初始化出現問題")
-            print(f"其問題如：{e}")
+            logger.exception("初始化出現問題：%s", e)
             return (Response(status=500, data=f"{e}"))
 
-    @action(methods=['get'], detail=False, authentication_classes=[], permission_classes=[permissions.AllowAny])
+    @action(methods=['get'], detail=False, permission_classes=[permissions.IsAdminUser])
     def setting_chinese(self,request):
+        """匯入中文食譜資料（僅限管理員）。"""
         from recipe.Sourcedata.ob_trans import multiThread
         multiThread()
         return (Response(status=200,data="running"))
@@ -53,14 +65,9 @@ class RecipeViewsets(viewsets.ModelViewSet):
     @action(methods=['post'], detail=False, authentication_classes=[], permission_classes=[permissions.AllowAny])
     def get(self, request):
         """給予前端食譜資料"""
-        from answer import frontend_error
         # 檢查變數是否上傳正常
-        try:
-            sentence = request.data.get("sentence",'')
-            user_query = request.data.get('user_query','')
-            UserIP = request.META['REMOTE_ADDAR']
-        except KeyError:
-            frontend_error.KeyError()
+        sentence = request.data.get("sentence", '')
+        user_query = request.data.get('user_query', '')
         # 先判斷使用者是否有傳任何東西
         if sentence=='' and user_query == '':
             return Response(status=400,data="使用者沒有輸入任何參數")
@@ -125,7 +132,7 @@ class RecipeViewsets(viewsets.ModelViewSet):
             res = ChineseRecipeSerializer(ob, many=True)
             return res.data
         else:
-            print("list_id無任何輸出")
+            logger.debug("list_id無任何輸出")
             return 0
     def get_client_ip(self,request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')

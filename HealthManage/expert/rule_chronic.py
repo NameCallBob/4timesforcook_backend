@@ -1,54 +1,39 @@
-from experta import *
+"""慢性病規則：依使用者症狀給出建議的食譜查詢參數。
+
+原以 experta 撰寫，因該套件已無法在 Python 3.10+ 執行而改為純 Python。
+
+DASH 飲食六大原則（命中高血壓／糖尿病／心臟病／慢性肺病時採用）：
+    1. 主食選擇未精製全穀雜糧類（糙米、燕麥）。
+    2. 大量蔬菜、適量水果，攝取鎂與鉀。
+    3. 選擇低脂奶類補充鈣質。
+    4. 蛋白質以白肉與植物性蛋白為主，減少紅肉與內臟。
+    5. 吃堅果、用好油（橄欖油等不飽和脂肪酸）。
+"""
+
+DASH_TRIGGERS = {"hypertension", "diabetes", "heart disease",
+                 "chronic lung disease"}
+
+DASH_DIET = {
+    "tags": ["hypertension", "diabetes", "heart disease",
+             "chronic lung disease", "health"],
+    "ingredients": ['oats', 'brown rice', 'low fat milk', 'fish',
+                    'chicken', 'nut', 'olive oil'],
+}
+
+MEDITERRANEAN_DIET = {
+    "tags": ["health"],
+    "ingredients": [
+        'Brown rice', 'oats', 'wheat', 'barley', 'rye',                     # 主食
+        'Spinach', 'carrots', 'beetroot', 'broccoli', 'kale', 'tomatoes',   # 蔬菜
+        'Basil', 'rosemary', 'ginger', 'garlic', 'chilli',                  # 香料
+        'Almonds', 'walnuts', 'sesame seeds', 'flax seeds', 'chia seeds',   # 堅果種子
+        'Black beans', 'mung beans', 'red beans', 'tofu', 'soy milk',       # 豆類
+    ],
+}
 
 
-class SymptonFact(Fact):
-    """症狀（慢性病）"""
-    pass
-
-class ChronicRecipeParmasRules(KnowledgeEngine):
-    """
-    依照慢性病給予其食譜的參數
-    """
-    def __makeRespose(self,target):
-        """console其找到的規則及結果，查看規則是否有正常運作"""
-        print(f"找到結果：{target}")
-
-    @Rule(SymptonFact(
-            name=P(
-                lambda x : len(
-                    set(["hypertension","diabetes","heart disease","chronic lung disease"]) & set(x)
-                    ) >= 1
-    )))
-    def DASHdiet(self):
-        """
-        DASH飲食的六大原則：
-
-        1.主食選擇全穀雜糧類：建議選用未精製、含麩皮的全穀類或根莖類（例如糙米、燕麥），取代精製過的白飯、白麵製品，以獲得豐富的膳食纖維。
-        2.大量蔬菜、適量水果：攝取豐富的鎂、鉀離子，特別是深綠色蔬菜如菠菜、空心菜等。
-        3.選擇低脂奶類：攝取豐富的鈣質，例如低脂優格、起司、優酪乳。
-        4.蛋白質以白肉為主：選擇魚肉、雞、鴨等家禽類，或是黃豆、毛豆等植物性蛋白質，減少攝取紅肉和內臟。
-        5.吃堅果、用好油：攝取不飽和脂肪酸，例如腰果、核桃，並使用橄欖油、沙拉油等植物油。
-        """
-
-        self.__makeRespose("DASH飲食")
-        self.res = {
-            "tags":["hypertension","diabetes","heart disease","chronic lung disease","health"],
-            "ingredients":[
-                'oats','brown rice','low fat milk','fish','chicken','nut','olive oil'
-                ]
-        }
-
-
-    def mediterranean_diet(self):
-        """地中海飲食"""
-        self.__makeRespose("地中海飲食")
-        self.res = {
-            "tags":["health"],
-            "ingredients":[
-                'Brown rice', 'oats', 'wheat', 'barley', 'rye', #主食
-                'Spinach', 'carrots', 'beetroot', 'broccoli', 'kale', 'tomatoes', #蔬菜
-                'Basil','rosemary', 'ginger', 'garlic', 'chilli', #香料
-                'Almonds', 'walnuts', 'sesame seeds', 'flax seeds', 'chia seeds', #堅果和種子
-                'Black beans', 'mung beans', 'red beans', 'tofu', 'soy mil' #豆類
-                ]
-        }
+def diet_for_symptoms(symptoms) -> dict:
+    """命中任一慢性病 -> DASH 飲食；否則回傳地中海飲食（一般健康取向）。"""
+    if symptoms and DASH_TRIGGERS & set(symptoms):
+        return dict(DASH_DIET)
+    return dict(MEDITERRANEAN_DIET)

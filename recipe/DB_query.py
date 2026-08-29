@@ -1,7 +1,11 @@
 # django
 from django.db.models import Q
 from recipe.models import Recipe_At , Recipe_Ob
+import logging
 import re
+
+logger = logging.getLogger(__name__)
+
 
 class DB_search:
 
@@ -85,9 +89,9 @@ class DB_search:
                 "Attribute":{}
                  }
             # 多實體判別(B、I)
-            if ['B-TAG','I-TAG'] in clean_labels:
+            if 'B-TAG' in clean_labels or 'I-TAG' in clean_labels:
                 res['object']['tags'] = self.__process_sentence(1,words,labels)
-            if ['B-ING','I-ING'] in clean_labels:
+            if 'B-ING' in clean_labels or 'I-ING' in clean_labels:
                 res['object']['ingredients'] = self.__process_sentence(0,words,labels)
             # 其他單一實體判別(B)
 
@@ -111,8 +115,8 @@ class DB_search:
                 return [words[i] for i in tag_indices]
 
 
-            # 要找的標籤列表
-            target_tags = [x for x in labels if x not in ['I-TAG','I-ING','O']]
+            # 要找的標籤列表（B-TAG/B-ING 已於上方多實體判別處理，排除以免覆蓋）
+            target_tags = [x for x in labels if x not in ['B-TAG','I-TAG','B-ING','I-ING','O']]
             if len(target_tags) != 0:
                 for target_tag in target_tags:
                     # 找到特定標籤的位置
@@ -165,6 +169,7 @@ class DB_search:
             for i in user_query:
                 # 食譜標籤
                 if i in tags:
+                    data_object.setdefault('tags', [])
                     if i not in data_object['tags']:
                         data_object['tags'].append(i)
                 # 食譜時間
@@ -205,11 +210,11 @@ class DB_search:
         if sentence != "":
             data = self.__type(sentence,labels)
             if data == 0:
-                print("無實體")
+                logger.debug("無實體")
                 return [47366,218967,23850]
 
         data = self.__process_UserQuery(data,user_query)
-        print(data)
+        logger.debug("query data: %s", data)
         querysetA , querysetB = self.__query_set(data)
 
         # 實體搜尋
@@ -217,7 +222,7 @@ class DB_search:
 
         # 屬性搜尋
         resultsB = Recipe_At.objects.filter(querysetB)
-        print(len(resultsB))
+        logger.debug("attribute results count: %s", len(resultsB))
         if len(resultsB) == 0 :
             final_results = resultsA.order_by('?')
         else:
@@ -227,10 +232,10 @@ class DB_search:
         # 按照分數排序
         final_results = final_results[0:3] ; res_id = []
         for i in final_results:
-            print(i.rid)
+            logger.debug("matched rid: %s", i.rid)
         res_id = [int(result.rid) for result in final_results]
         if res_id == []:
             # 若BERT未尋找出任何東西，此為替代方案。\
-            print("替代方案!")
+            logger.debug("使用替代方案！")
             res_id = [47366,67547,432077]
         return res_id

@@ -13,6 +13,13 @@ class MemberPrivateSerializer(serializers.Serializer):
         try:
             if 1 == MemberP.objects.filter(account=validated_data['account']).count():
                 return [False, "已註冊過", None]
+            # 註冊前強制套用 Django 密碼驗證器
+            from django.contrib.auth.password_validation import validate_password
+            from django.core.exceptions import ValidationError as DjangoValidationError
+            try:
+                validate_password(validated_data['password'])
+            except DjangoValidationError as e:
+                return [False, "密碼不符合安全性規則：{0}".format("；".join(e.messages)), None]
             uid = "U{0:06d}".format(MemberP.objects.all().count()+2)
             from django.contrib.auth.hashers import make_password
             ob = MemberP.objects.create(
@@ -34,8 +41,18 @@ class MemberSerializer(serializers.ModelSerializer):
         fields = ['name', 'birth', 'email', 'gender','job']
 
     def validate(self, data):
-        existing_member = Member.objects.filter(email=data['email']).first()
-        if existing_member:
+        """檢查 email 是否被別人用過。
+
+        partial update 時 data 可能沒有 email（原本直接用 data['email'] 會 KeyError
+        變成 500），而更新自己的資料時也不該把自己的 email 判為重複。
+        """
+        email = data.get('email')
+        if not email:
+            return data
+        duplicates = Member.objects.filter(email=email)
+        if self.instance is not None:
+            duplicates = duplicates.exclude(pk=self.instance.pk)
+        if duplicates.exists():
             raise serializers.ValidationError("該電子郵件地址已被註冊。")
         return data
 
@@ -108,27 +125,16 @@ class  PreferSerializer(serializers.Serializer):
             raise serializers.ValidationError(e)
 
 
-class ForgotPasswordSerializer(serializers.Serializer):
-    password = serializers.CharField(max_length=100)
-    email = serializers.CharField(max_length=100)
-    birth = serializers.DateField()
-    def change(self,data):
-        ob = Member.objects.filter(email = data['email'],birth=data['birth'])
-        if ob.count() == 1:
-            try:
-                from django.contrib.auth.hashers import make_password
-                new_password = make_password(data['password'])
-                uid = ob[0].uid.uid
-                ob = MemberP.objects.get(uid=uid)
-                ob.password = new_password
-                ob.save()
-                return True
+class RequestPasswordResetSerializer(serializers.Serializer):
+    """請求密碼重設：僅需 email。回應不透露該 email 是否存在（避免帳號列舉）。"""
+    email = serializers.EmailField(max_length=100)
 
-            except Exception as e :
-                raise serializers.ValidationError(e)
-                return False
-        else:
-            return False
+
+class ResetPasswordSerializer(serializers.Serializer):
+    """透過 uid + token 完成密碼重設。"""
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    password = serializers.CharField(max_length=128, write_only=True)
 
 from Member.models import InputRecord
 class InputRecordSerializer(serializers.ModelSerializer):
