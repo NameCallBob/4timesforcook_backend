@@ -112,6 +112,20 @@ class TestRegistration:
         # Profile row was created and linked.
         assert Member.objects.filter(uid=mp).exists()
 
+    def test_register_creates_health_target(self, client):
+        """註冊完就要有每日目標，否則 /HManage/Personal/ 會直接壞掉。"""
+        from Member.models import HealthTarget
+
+        payload = build_register_payload(account="targetuser",
+                                         email="target@example.com")
+        resp = client.post(REGISTER_URL, payload, format="json")
+
+        assert resp.status_code == 200
+        target = HealthTarget.objects.get(uid__uid__account="targetuser")
+        # 身高 165cm / 體重 55kg -> BMI 約 20.2（標準），係數 30。
+        assert target.calories_intake == round(30 * 55)
+        assert target.water_intake == round(30 * 55)
+
     def test_register_rejects_weak_password(self, client):
         payload = build_register_payload(account="weakuser",
                                          email="weak@example.com",
@@ -204,3 +218,56 @@ class TestRecordCheckInputGuard:
     def test_check_empty_body_returns_400(self, client):
         resp = client.post(TEST_CHECK_URL, [], format="json")
         assert resp.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# 個人資料：只看得到自己的，且不得因 QuerySet 誤用而 500。
+# ---------------------------------------------------------------------------
+
+class TestMemberProfile:
+    def test_info_returns_own_profile(self, client):
+        me = make_user("frank", STRONG_PASSWORD, "frank@example.com", "U000010")
+        make_user("grace", STRONG_PASSWORD, "grace@example.com", "U000011")
+        client.force_authenticate(user=me)
+
+        resp = client.get(MEMBER_INFO_URL)
+        assert resp.status_code == 200
+        assert resp.data["email"] == "frank@example.com"
+        assert resp.data["name"] == "frank"
+
+    def test_info_without_profile_returns_404(self, client):
+        mp = MemberP.objects.create_user(account="noprofile",
+                                         password=STRONG_PASSWORD, uid="U000012")
+        client.force_authenticate(user=mp)
+
+        resp = client.get(MEMBER_INFO_URL)
+        assert resp.status_code == 404
+
+    def test_change_partial_update_without_email(self, client):
+        """只改姓名時不帶 email，不可因序列化器讀不到 email 而 500。"""
+        me = make_user("henry", STRONG_PASSWORD, "henry@example.com", "U000013")
+        client.force_authenticate(user=me)
+
+        resp = client.post("/Member/change/", {"name": "Henry Jr."},
+                           format="json")
+        assert resp.status_code == 200
+        assert Member.objects.get(uid=me).name == "Henry Jr."
+
+    def test_change_keeping_own_email_is_allowed(self, client):
+        me = make_user("iris", STRONG_PASSWORD, "iris@example.com", "U000014")
+        client.force_authenticate(user=me)
+
+        resp = client.post("/Member/change/",
+                           {"name": "Iris", "email": "iris@example.com"},
+                           format="json")
+        assert resp.status_code == 200
+
+    def test_change_to_another_members_email_is_rejected(self, client):
+        me = make_user("jack", STRONG_PASSWORD, "jack@example.com", "U000015")
+        make_user("kate", STRONG_PASSWORD, "kate@example.com", "U000016")
+        client.force_authenticate(user=me)
+
+        resp = client.post("/Member/change/",
+                           {"email": "kate@example.com"}, format="json")
+        assert resp.status_code == 400
+        assert Member.objects.get(uid=me).email == "jack@example.com"
